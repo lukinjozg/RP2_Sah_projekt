@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chessboard</title>
+    <link rel="stylesheet" type="text/css" href="ukrasi.css">
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <p>Username</p>
+    
+    <table class="chessboard">
+        <tbody></tbody>
+    </table>
+
+    <p>Username</p>
+    
+    <script>
+        $(document).ready(function() {
+            var boardSize = 8;
+            var isWhite = true;
+  
+        for (var i = 0; i < boardSize; i++) {
+            var row = $("<tr></tr>");
+            $(".chessboard tbody").append(row);
+  
+            for (var j = 0; j < boardSize; j++) {
+                var cellClass = isWhite ? "white" : "black";
+                var cell = $("<td></td>").addClass(cellClass);
+  
+                cell.attr("data-row", i);
+                cell.attr("data-col", j);
+  
+                cell.click(function() {
+                    var row = $(this).data("row");
+                    var col = $(this).data("col");
+  
+                console.log("Clicked on cell (" + row + ", " + col + ")");
+            });
+  
+            row.append(cell);
+            isWhite = !isWhite;
+            }
+  
+        isWhite = !isWhite;
+        }
+    });
+  </script>
+</body>
+</html>
