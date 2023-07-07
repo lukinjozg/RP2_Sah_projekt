@@ -6,8 +6,6 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <button class="white1"></button>
-
     <p class="username-box"> Username </p>
     
     <div class="chessboard"></div>
@@ -23,7 +21,7 @@
         //R - rook, kula
         //w,b - u indeksu koje je boje
 
-        ploca = [['Rb','Nb','Bb','Qb','Kb','Bb','Nb','Rb'],
+        var ploca = [['Rb','Nb','Bb','Qb','Kb','Bb','Nb','Rb'],
                  ['Pb','Pb','Pb','Pb','Pb','Pb','Pb','Pb'],
                  ['.','.','.','.','.','.','.','.'],
                  ['.','.','.','.','.','.','.','.'],
@@ -31,6 +29,27 @@
                  ['.','.','.','.','.','.','.','.'],
                  ['Pw','Pw','Pw','Pw','Pw','Pw','Pw','Pw'],
                  ['Rw','Nw','Bw','Qw','Kw','Bw','Nw','Rw']];
+
+        var na_potezu = 'w';
+        
+        function in_board(x, y){
+            if( x >= 0 && x < 8 && y >= 0 && y < 8){
+                return true;
+            }
+
+            return false;
+        }
+
+        function promjeni_tko_je_na_potezu(){
+            if( na_potezu == 'w'){
+                na_potezu = 'b';
+                console.log("Na potezu je B");
+                return;
+            }
+
+            console.log("Na potezu je W");
+            na_potezu = 'w';
+        }
 
 
         $(document).ready(function() {
@@ -66,6 +85,38 @@
 
                         id_button = "#" + row.toString() + col.toString();
 
+                        function make_circle(x,y){
+                            id_button = "#" + x.toString() + y.toString();
+
+                            $(id_button).removeClass();
+
+                            if((x+y)%2 == 0){
+                                $(id_button).addClass('white1');
+                            }
+
+                            else{
+                                $(id_button).addClass('black1');
+                            }
+                        }
+
+                        function line(smx,smy, x , y){
+                                while(true){
+                                    x += smx;
+                                    y += smy;
+
+                                    if(!in_board(x,y)) break;
+
+                                    if(ploca[x][y] != '.'){
+                                        if(ploca[x][y][1] == na_potezu) break;
+
+                                        make_circle(x,y);
+                                        break;
+                                    }
+
+                                    make_circle(x,y);
+                                }
+                            }
+
                         if($(id_button).attr('class').length > 5){
                             ploca[row][col] = ploca[current_piece[0]][current_piece[1]];
                             $(id_button).text(ploca[current_piece[0]][current_piece[1]]);
@@ -77,13 +128,14 @@
                             
                             current_piece[0] = row;
                             current_piece[1] = col;
+
+                            promjeni_tko_je_na_potezu();
                         }
 
+                        //citimo plocu
                         for (var i = 0; i < boardSize; i++) {
                             for (var j = 0; j < boardSize; j++) {
                                 id_button = "#" + i.toString() + j.toString();
-                                
-                                console.log(id_button);
 
                                 $(id_button).removeClass();
 
@@ -97,7 +149,7 @@
                             }
                         }
 
-                        if(ploca[row][col] == '.'){
+                        if(ploca[row][col] == '.' || ploca[row][col][1] != na_potezu){
                             console.log("Tocka");
 
                             current_piece[0] = -1;
@@ -109,58 +161,183 @@
                             current_piece[1] = -1;
                         }
 
-                        else if(ploca[row][col] == 'Pw'){
+                        //Pijun
+                        else if(ploca[row][col][0] == 'P'){
                             console.log("Pawn");
 
                             current_piece[0] = row;
                             current_piece[1] = col;
 
-                            if(row == 6){
-                                var x = row - 1;
-                                var y = col;
+                            var x , y;
+                            var pocetak = 1;
+                            var sm = 1;
+
+                            if(na_potezu == 'w'){
+                                pocetak = 6;
+                                sm = -1;
+                            }
+
+                            //na pocetku moze 2 unaprijed
+                            if(row == pocetak && ploca[row + sm][col] == '.'){
+                                x = row + sm;
+                                y = col;
 
                                 id_button = "#" + x.toString() + y.toString();
 
-                                $(id_button).removeClass();
+                                make_circle(x,y);
 
-                                if((x+y)%2 == 0){
-                                    $(id_button).addClass('white1');
-                                }
+                                if(ploca[row + sm + sm][col] == '.'){
+                                    x += sm;
 
-                                else{
-                                    $(id_button).addClass('black1');
-                                }
-
-                                x--;
-
-                                id_button = "#" + x.toString() + y.toString();
-
-                                $(id_button).removeClass();
-
-                                if((x+y)%2 == 0){
-                                    $(id_button).addClass('white1');
-                                }
-
-                                else{
-                                    $(id_button).addClass('black1');
+                                    make_circle(x,y);
                                 }
                             }
 
-                            else{
-                                var x = row - 1;
-                                var y = col;
+                            //inace 1 unaprijed
+                            else if( in_board(row + sm, col) && ploca[row + sm][col] == '.'){
+                                x = row + sm;
+                                y = col;
 
-                                id_button = "#" + x.toString() + y.toString();
+                                make_circle(x,y);
+                            }
 
-                                $(id_button).removeClass();
+                            //ako ima neš za napasti
+                            if(in_board(row + sm, col - 1) && ploca[row + sm][col - 1] != '.'){
+                                x = row + sm;
+                                y = col - 1;
 
-                                if((x+y)%2 == 0){
-                                    $(id_button).addClass('white1');
-                                }
+                                make_circle(x,y);
+                            }
 
-                                else{
-                                    $(id_button).addClass('black1');
-                                }
+                            if(in_board(row + sm, col + 1) && ploca[row + sm][col + 1] != '.'){
+                                x = row + sm;
+                                y = col + 1;
+
+                                make_circle(x,y);
+                            }
+                        }
+
+                        //Kula
+                        else if(ploca[row][col][0] == 'R'){
+                            console.log("Rook");
+
+                            current_piece[0] = row;
+                            current_piece[1] = col;
+
+                            var x = row, y = col; 
+
+                            //gore
+                            line(1,0,x,y);
+    
+                            //dole
+                            line(-1,0,x,y);
+
+                            //desno
+                            line(0,1,x,y);
+    
+                            //levo
+                            line(0,-1,x,y);
+                        }
+
+                        //Lovac
+                        else if(ploca[row][col][0] == 'B'){
+                            console.log("Bishop");
+
+                            current_piece[0] = row;
+                            current_piece[1] = col;
+
+                            var x = row, y = col; 
+
+                            //gore desno
+                            line(1,1,x,y);
+    
+                            //dole desno
+                            line(-1,1,x,y);
+
+                            //gore levo 
+                            line(1,-1,x,y);
+    
+                            //dole levo
+                            line(-1,-1,x,y);
+                        }
+
+                        //Kraljica
+                        else if(ploca[row][col][0] == 'Q'){
+                            console.log("Queen");
+
+                            current_piece[0] = row;
+                            current_piece[1] = col;
+
+                            var x = row, y = col; 
+
+                            //gore desno
+                            line(1,1,x,y);
+    
+                            //dole desno
+                            line(-1,1,x,y);
+
+                            //gore levo 
+                            line(1,-1,x,y);
+    
+                            //dole levo
+                            line(-1,-1,x,y);
+
+                            //gore
+                            line(1,0,x,y);
+    
+                            //dole
+                            line(-1,0,x,y);
+
+                            //desno
+                            line(0,1,x,y);
+    
+                            //levo
+                            line(0,-1,x,y);
+                        }
+
+                        //Konj
+                        else if(ploca[row][col][0] == 'N'){
+                            console.log("Knight");
+
+                            current_piece[0] = row;
+                            current_piece[1] = col;
+
+                            var x = row, y = col; 
+
+                            var movesx = [2, 1, 2, 1,-2,-1,-2,-1];
+                            var movesy = [1, 2,-1,-2, 1, 2,-1,-2];
+
+                            for(var i = 0; i < 8; i ++){
+                                x = row + movesx[i], y = col + movesy[i];
+
+                                if(!in_board(x,y)) continue;
+
+                                if(ploca[x][y] == '.') make_circle(x,y);
+
+                                else if(ploca[x][y] != '.' && ploca[x][y][1] != na_potezu) make_circle(x,y);
+                            }
+                        }
+
+                        //Ti
+                        else if(ploca[row][col][0] == 'K'){
+                            console.log("King");
+
+                            current_piece[0] = row;
+                            current_piece[1] = col;
+
+                            var x = row, y = col; 
+
+                            var movesx = [1,-1, 0, 0, 1,-1, 1,-1];
+                            var movesy = [0, 0,-1, 1, 1, 1,-1,-1];
+
+                            for(var i = 0; i < 8; i ++){
+                                x = row + movesx[i], y = col + movesy[i];
+
+                                if(!in_board(x,y)) continue;
+
+                                if(ploca[x][y] == '.') make_circle(x,y);
+
+                                else if(ploca[x][y] != '.' && ploca[x][y][1] != na_potezu) make_circle(x,y);
                             }
                         }
   
