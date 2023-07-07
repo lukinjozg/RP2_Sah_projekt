@@ -3,48 +3,177 @@
 <head>
     <title>Chessboard</title>
     <link rel="stylesheet" type="text/css" href="ukrasi.css">
-    
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <p>Username</p>
-    
-    <table class="chessboard">
-        <tbody></tbody>
-    </table>
+    <button class="white1"></button>
 
-    <p>Username</p>
+    <p class="username-box"> Username </p>
+    
+    <div class="chessboard"></div>
+
+    <p class="username-box"> Username </p>
     
     <script>
+        //K - kralj
+        //Q - kraljica
+        //B - bishop/lovac
+        //P - pijun
+        //N - Knight/ konj
+        //R - rook, kula
+        //w,b - u indeksu koje je boje
+
+        ploca = [['Rb','Nb','Bb','Qb','Kb','Bb','Nb','Rb'],
+                 ['Pb','Pb','Pb','Pb','Pb','Pb','Pb','Pb'],
+                 ['.','.','.','.','.','.','.','.'],
+                 ['.','.','.','.','.','.','.','.'],
+                 ['.','.','.','.','.','.','.','.'],
+                 ['.','.','.','.','.','.','.','.'],
+                 ['Pw','Pw','Pw','Pw','Pw','Pw','Pw','Pw'],
+                 ['Rw','Nw','Bw','Qw','Kw','Bw','Nw','Rw']];
+
+
         $(document).ready(function() {
             var boardSize = 8;
             var isWhite = true;
+
+            var current_piece = [-1,-1];
   
-        for (var i = 0; i < boardSize; i++) {
-            var row = $("<tr></tr>");
-            $(".chessboard tbody").append(row);
+            for (var i = 0; i < boardSize; i++) {
+                for (var j = 0; j < boardSize; j++) {
+                    var cellClass = isWhite ? "white" : "black";
+                    
+                    if(ploca[i][j] != '.'){
+                        var cell = $("<button>"+ ploca[i][j] +"</button>");
+                    }
+
+                    else{
+                        var cell = $("<button></button>");
+                    }
+
+                    cell.addClass(cellClass);
+                
+                    cell.attr("data-row", i);
+                    cell.attr("data-col", j);
+                    cell.attr("data-clicked", 0);
+                
+                    cell.attr('id', i.toString() + j.toString());
   
-            for (var j = 0; j < boardSize; j++) {
-                var cellClass = isWhite ? "white" : "black";
-                var cell = $("<td></td>").addClass(cellClass);
+                    cell.click(function() {
+                        var row = $(this).data("row");
+                        var col = $(this).data("col");
+                        var id_button;
+
+                        id_button = "#" + row.toString() + col.toString();
+
+                        if($(id_button).attr('class').length > 5){
+                            ploca[row][col] = ploca[current_piece[0]][current_piece[1]];
+                            $(id_button).text(ploca[current_piece[0]][current_piece[1]]);
+
+                            ploca[current_piece[0]][current_piece[1]] = '.';
+                            
+                            id_button = "#" + current_piece[0].toString()  + current_piece[1].toString();
+                            $(id_button).text("");
+                            
+                            current_piece[0] = row;
+                            current_piece[1] = col;
+                        }
+
+                        for (var i = 0; i < boardSize; i++) {
+                            for (var j = 0; j < boardSize; j++) {
+                                id_button = "#" + i.toString() + j.toString();
+                                
+                                console.log(id_button);
+
+                                $(id_button).removeClass();
+
+                                if((i+j)%2 == 0){
+                                    $(id_button).addClass('white');
+                                }
+
+                                else{
+                                    $(id_button).addClass('black');
+                                }
+                            }
+                        }
+
+                        if(ploca[row][col] == '.'){
+                            console.log("Tocka");
+
+                            current_piece[0] = -1;
+                            current_piece[1] = -1;
+                        }
+
+                        else if(current_piece[0] == row && current_piece[1] == col){
+                            current_piece[0] = -1;
+                            current_piece[1] = -1;
+                        }
+
+                        else if(ploca[row][col] == 'Pw'){
+                            console.log("Pawn");
+
+                            current_piece[0] = row;
+                            current_piece[1] = col;
+
+                            if(row == 6){
+                                var x = row - 1;
+                                var y = col;
+
+                                id_button = "#" + x.toString() + y.toString();
+
+                                $(id_button).removeClass();
+
+                                if((x+y)%2 == 0){
+                                    $(id_button).addClass('white1');
+                                }
+
+                                else{
+                                    $(id_button).addClass('black1');
+                                }
+
+                                x--;
+
+                                id_button = "#" + x.toString() + y.toString();
+
+                                $(id_button).removeClass();
+
+                                if((x+y)%2 == 0){
+                                    $(id_button).addClass('white1');
+                                }
+
+                                else{
+                                    $(id_button).addClass('black1');
+                                }
+                            }
+
+                            else{
+                                var x = row - 1;
+                                var y = col;
+
+                                id_button = "#" + x.toString() + y.toString();
+
+                                $(id_button).removeClass();
+
+                                if((x+y)%2 == 0){
+                                    $(id_button).addClass('white1');
+                                }
+
+                                else{
+                                    $(id_button).addClass('black1');
+                                }
+                            }
+                        }
   
-                cell.attr("data-row", i);
-                cell.attr("data-col", j);
+                        console.log("Clicked on cell (" + row + ", " + col + ")");
+                    });
   
-                cell.click(function() {
-                    var row = $(this).data("row");
-                    var col = $(this).data("col");
+                    $(".chessboard").append(cell);
+                    isWhite = !isWhite;
+                }
   
-                console.log("Clicked on cell (" + row + ", " + col + ")");
-            });
-  
-            row.append(cell);
-            isWhite = !isWhite;
+                isWhite = !isWhite;
             }
-  
-        isWhite = !isWhite;
-        }
-    });
+        });
   </script>
 </body>
 </html>

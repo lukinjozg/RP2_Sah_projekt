@@ -1,21 +1,80 @@
 .chessboard {
-    display: inline-block;
-    border-collapse: collapse;
+    display: flex;
+    flex-wrap: wrap;
+    width: 480px;
 }
 
-.chessboard td {
+.chessboard button {
     width: 60px;
     height: 60px;
     text-align: center;
     font-size: 20px;
     cursor: pointer;
+    border: none; /* Remove borders */
+    outline: none;
 }
 
 .white {
     background-color: #ade1f5;
 }
 
+.white1 {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    border: none;
+    background-color: #ade1f5;
+    font-size: 16px;
+    cursor: pointer;
+    overflow: hidden;
+}
+  
+.white1::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 80%;
+    border: 5px solid #ff9800;
+    border-radius: 50%;
+}
+
 .black {
     background-color: #18706c;
-    color: white;
 }
+
+.black1 {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    border: none;
+    background-color: #18706c;
+    font-size: 16px;
+    cursor: pointer;
+    overflow: hidden;
+  }
+  
+.black1::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 80%;
+    border: 5px solid #ff9800;
+    border-radius: 50%;
+}
+
+.username-box {
+    width: 200px;
+    height: 20px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    padding: 5px;
+    font-family: "Arial", sans-serif;
+}
+
+/* Do tuda su ukrasi za board.html
