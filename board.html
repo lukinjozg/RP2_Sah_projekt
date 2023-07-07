@@ -31,6 +31,8 @@
                  ['Rw','Nw','Bw','Qw','Kw','Bw','Nw','Rw']];
 
         var na_potezu = 'w';
+
+        var on_passant = [-1,-1];
         
         function in_board(x, y){
             if( x >= 0 && x < 8 && y >= 0 && y < 8){
@@ -118,6 +120,29 @@
                             }
 
                         if($(id_button).attr('class').length > 5){
+                            //za on passant provjera
+                            if(on_passant[0] != -1){
+                                //dogodio se on passant
+                                var pomocna_koordinata;
+                                if(na_potezu == 'w') pomocna_koordinata = -1;
+                                else pomocna_koordinata = 1;
+
+                                if(ploca[current_piece[0]][current_piece[1]][0] == 'P' &&  row == (on_passant[0] + pomocna_koordinata) && col == on_passant[1] ){
+                                    id_button = "#" + on_passant[0].toString()  + on_passant[1].toString();
+                                    ploca[on_passant[0]][on_passant[1]] = '.';
+                                    $(id_button).text("");
+                                }
+                                on_passant = [-1,-1];
+                            }
+
+                            if(ploca[current_piece[0]][current_piece[1]][0] == 'P'){
+                                if(Math.abs(row - current_piece[0]) > 1){
+                                    on_passant = [row,col];
+                                }
+                            }
+
+                            id_button = "#" + row.toString() + col.toString();
+
                             ploca[row][col] = ploca[current_piece[0]][current_piece[1]];
                             $(id_button).text(ploca[current_piece[0]][current_piece[1]]);
 
@@ -182,8 +207,6 @@
                                 x = row + sm;
                                 y = col;
 
-                                id_button = "#" + x.toString() + y.toString();
-
                                 make_circle(x,y);
 
                                 if(ploca[row + sm + sm][col] == '.'){
@@ -214,6 +237,15 @@
                                 y = col + 1;
 
                                 make_circle(x,y);
+                            }
+
+                            if(on_passant[0] != -1){
+                                x = row;
+                                y = col;
+
+                                if( x == on_passant[0] && (y - 1 == on_passant[1] || y + 1 == on_passant[1])){
+                                    make_circle(x + sm,on_passant[1]);
+                                }
                             }
                         }
 
