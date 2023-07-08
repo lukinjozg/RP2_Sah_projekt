@@ -70,6 +70,7 @@ if ($action == 'gameover') { // poziva se kad user pobjedi
         echo json_encode($response);
         exit;
     }
+    // dodati za oslobadanje indeksa igre
 
     // za svakog igraca se zasebno zove win/lose/draw
     // ne treba updateat bodove koje drugi igrac gubi
@@ -153,12 +154,14 @@ else if ($action === 'join') { // pokreni igru
     $pairId = findWaitingPair();
     if ($pairId !== null) {
         $_SESSION['status'][$pairId] = 'paired';
+        $_SESSION['gameid'][$_POST['user']] = $pairId;
         $response = ['success' => true, 'turn' => 'white'];
     }
     else {
         $pairId = generatePairId();
         if ($pairId !== NULL) {
             $_SESSION['status'][$pairId] = 'waiting';
+            $_SESSION['gameid'][$_POST['user']] = $pairId;
             $response = ['success' => true, 'turn' => 'black'];
         }
         else {
@@ -177,7 +180,7 @@ else if ($action === 'reach') { // je li protivnik napravio potez
 }
 else if ($action === 'send') { // napravi potez
     $pairId = $_SESSION['gameid'][$_POST['user']];
-    $player = isset($_POST['player']) ? $_POST['player'] : '';
+    $player = isset($_POST['user']) ? $_POST['user'] : '';
     $board = isset($_POST['board']) ? json_decode($_POST['board']) : [];
 
     if (empty($player) || empty($board)) {
