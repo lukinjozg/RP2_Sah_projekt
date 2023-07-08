@@ -49,50 +49,36 @@ function findWaitingPair() {
 
 $action = isset($_POST['action']) ? $_POST['action'] : '';
 
-if ($action == 'win') { // poziva se kad user pobjedi
-    if(!isset($_POST['user'])){
+if ($action == 'gameover') { // poziva se kad user pobjedi
+    if (!isset($_POST['user'])) {
         $response = ['success' => false, 'error' => 'User empty'];
         echo json_encode($response);
         exit;
     }
-
-    // ovdje napisati kod za updateat tablice sa ratinzima
-    // za svakog igraca se zasebno zove win/lose ne treba
-    // updateat bodove koje drugi igrac gubi
-
-    $response = ['success' => true];
-    echo json_encode($response);
-}
-else if ($action == 'lose') { // poziva se kad user izgubi
-    if(!isset($_POST['user'])){
-        $response = ['success' => false, 'error' => 'User empty'];
+    $ending = $_POST['ending']; // pise 'win', 'lose' ili 'draw'
+    if ($ending == 'win') {
+        // ovdje napisati kod za updateat tablice sa ratinzima
+    }
+    else if ($ending == 'lose') {
+        // ovdje napisati kod za updateat tablice sa ratinzima
+    }
+    else if ($ending == 'draw') {
+        // ovdje napisati kod za updateat tablice sa ratinzima
+    }
+    else {
+        $response = ['success' => false, 'error' => 'Invalid game ending'];
         echo json_encode($response);
         exit;
     }
 
-    // ovdje napisati kod za updateat tablice sa ratinzima
-    // za svakog igraca se zasebno zove win/lose ne treba
-    // updateat bodove koje drugi igrac gubi
-
-    $response = ['success' => true];
-    echo json_encode($response);
-}
-else if ($action == 'draw') { // poziva se kad je izjednaceno
-    if(!isset($_POST['user'])){
-        $response = ['success' => false, 'error' => 'User empty'];
-        echo json_encode($response);
-        exit;
-    }
-
-    // ovdje napisati kod za updateat tablice sa ratinzima
-    // za svakog igraca se zasebno zove win/lose ne treba
-    // updateat bodove koje drugi igrac gubi
+    // za svakog igraca se zasebno zove win/lose/draw
+    // ne treba updateat bodove koje drugi igrac gubi
 
     $response = ['success' => true];
     echo json_encode($response);
 }
 else if ($action == 'profile') { // pokazivanje profila
-    if(!isset($_POST['user'])){
+    if (!isset($_POST['user'])) {
         $response = ['success' => false, 'error' => 'User empty'];
         echo json_encode($response);
         exit;
