@@ -10,7 +10,7 @@
 
 	<nav>
 		<ul>
-			<li><a href="index.php?rt=books">Popis svih knjiga</a></li>
+			<li><a href="index.php?rt=game">Join game</a></li>
 			<li><a href="index.php?rt=users">User ratings</a></li>
 			<li><a href="index.php?rt=ratings/search">Search user by username</a></li>
 		</ul>
