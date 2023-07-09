@@ -11,6 +11,7 @@
     <div class="chessboard"></div>
 
     <p class="username-box"> Username </p>
+    <p id="luzer"></p>
     
     <script>
         //K - kralj
@@ -20,6 +21,8 @@
         //N - Knight/ konj
         //R - rook, kula
         //w,b - u indeksu koje je boje
+
+        var gotovo = 0;
 
         var kings = {
             b: [0,4],
@@ -92,44 +95,47 @@
             return str_hp;
         }
 
+        function test_line(smx,smy, str /* B ili R */, color){
+            var x = kings[color][0];
+            var y = kings[color][1];
+
+            while(true){
+                x += smx;
+                y += smy;
+
+                if(!in_board(x,y)) break;
+
+                if(ploca[x][y][0][0] == str || ploca[x][y][0][0] == 'Q'){
+                        if(ploca[x][y][0][1] != color && ploca[kings[color][0]][kings[color][1]][1] <= attack_stats[ploca[x][y][0][0]]){
+                            console.log("Kralj je napadnut od figure",x,y ,ploca[x][y][0][0]);
+                            return false;
+                        }
+
+                    break;
+                }
+
+                if(ploca[x][y][0] != '.') break;
+            }
+
+            return true;
+        }
+
         function is_king_safe(color, from_x, from_y, where_x, where_y){
             //jel ga napadaju kula,kraljica ili lovac
+            var x = kings[color][0];
+            var y = kings[color][1];
+
             var from = ploca[from_x][from_y];
             var where = ploca[where_x][where_y];
 
             //jel figura skace ili ne gledamo
-            if(ploca[where_x][where_y][1] <= attack_stats[ploca[from_x][from_y][0][0]]){
+            if(!(ploca[where_x][where_y][0] == ploca[from_x][from_y][0] /*ako su iste samo skip*/ ) && ploca[where_x][where_y][1] <= attack_stats[ploca[from_x][from_y][0][0]]){
                 ploca[where_x][where_y] = ploca[from_x][from_y];
                 ploca[from_x][from_y] = ['.',0];
             }
 
-            function test_line(smx,smy, str /* B ili R */){
-                var x = kings[color][0];
-                var y = kings[color][1];
-
-                while(true){
-                    x += smx;
-                    y += smy;
-
-                    if(!in_board(x,y)) break;
-
-                    if(ploca[x][y][0][0] == str || ploca[x][y][0][0] == 'Q'){
-                            if(ploca[x][y][0][1] != color && ploca[kings[color][0]][kings[color][1]][1] <= attack_stats[ploca[x][y][0][0]]){
-                                console.log("Kralj je napadnut od figure",x,y ,ploca[x][y][0][0]);
-                                return false;
-                            }
-
-                        break;
-                    }
-
-                    if(ploca[x][y][0] != '.') break;
-                }
-
-                return true;
-            }
-
-            if(!(test_line(1,0,'R') && test_line(-1,0,'R') && test_line(0,1,'R') && test_line(0,-1,'R') && 
-                 test_line(1,1,'B') && test_line(1,-1,'B') && test_line(-1,1,'B') && test_line(-1,-1,'B'))){
+            if(!(test_line(1,0,'R',color) && test_line(-1,0,'R', color) && test_line(0,1,'R', color) && test_line(0,-1,'R',color) && 
+                 test_line(1,1,'B',color) && test_line(1,-1,'B',color) && test_line(-1,1,'B',color) && test_line(-1,-1,'B',color))){
                     ploca[where_x][where_y] = where;
                     ploca[from_x][from_y] = from;
                     return false;
@@ -193,7 +199,184 @@
             return true;
         }
 
+        function check_mate(color){
+            function simline(smx,smy, x , y){
+                var from_x = x;
+                var from_y = y;
+
+                while(true){
+                    x += smx;
+                    y += smy;
+
+                    if(!in_board(x,y)) break;
+
+                    if(ploca[x][y][0] != '.'){
+                        if(ploca[x][y][0][1] == na_potezu) break;
+
+                        if(is_king_safe(na_potezu,from_x,from_y, x,y)) return true;
+                        
+                        break;
+                    }
+
+                    if(is_king_safe(na_potezu,from_x,from_y, x,y)) return true;
+                }
+
+                return false;
+            }
+
+            function simR(x,y){
+                return simline(1,0, x , y) || simline(0,1, x , y) || simline(-1,0, x , y) || simline(0,-1, x , y);
+            }
+
+            function simB(x,y){
+                return simline(1,1, x , y) || simline(1,-1, x , y) || simline(-1,1, x , y) || simline(-1,-1, x , y);
+            }
+
+            function simQ(x,y){
+                return simline(1,1, x , y) || simline(1,-1, x , y) || simline(-1,1, x , y) || simline(-1,-1, x , y) ||
+                simline(1,0, x , y) || simline(0,1, x , y) || simline(-1,0, x , y) || simline(0,-1, x , y);
+            }
+
+            function simN(xrow,ycol){
+                var movesx = [2, 1, 2, 1,-2,-1,-2,-1];
+                var movesy = [1, 2,-1,-2, 1, 2,-1,-2];
+                var x,y;
+
+                for(var i = 0; i < 8; i ++){
+                    x = xrow + movesx[i], y = ycol + movesy[i];
+
+                    if(!in_board(x,y) || !is_king_safe(na_potezu,xrow,ycol,x,y)) continue;
+
+                    if(ploca[x][y][0] == '.') return true;
+
+                    else if(ploca[x][y][0] != '.' && ploca[x][y][0][1] != na_potezu) return true;
+                }
+
+                return false;
+            }
+
+            function simP(xrow, ycol){
+                var pocetak = 1;
+                var sm = 1;
+
+                var x ,y;
+
+                if(na_potezu == 'w'){
+                    pocetak = 6;
+                    sm = -1;
+                }
+
+                //na pocetku moze 2 unaprijed
+                if(xrow == pocetak && ploca[xrow + sm][ycol][0] == '.'){
+                    x = xrow + sm;
+                    y = ycol;
+
+                    if(is_king_safe(na_potezu,xrow,ycol,x,y)) return true;
+
+                    if(ploca[xrow + sm + sm][ycol][0] == '.'){
+                        x += sm;
+
+                        if(is_king_safe(na_potezu,xrow,ycol,x,y)) return true;
+                    }
+                }
+
+                //inace 1 unaprijed
+                else if( in_board(xrow + sm, ycol) && ploca[xrow + sm][ycol][0] == '.'){
+                    x = xrow + sm;
+                    y = ycol;
+
+                    if(is_king_safe(na_potezu,xrow,ycol,x,y)) return true;
+                }
+
+                            //ako ima neš za napasti
+                if(in_board(xrow + sm, ycol - 1) && ploca[xrow + sm][ycol - 1][0] != '.' && ploca[xrow + sm][ycol - 1][0][1] != na_potezu){
+                    x = xrow + sm;
+                    y = ycol - 1;
+
+                    if(is_king_safe(na_potezu,xrow,ycol,x,y)) return true;
+                }
+
+                if(in_board(xrow + sm, ycol + 1) && ploca[xrow + sm][ycol + 1][0] != '.' && ploca[xrow + sm][ycol + 1][0][1] != na_potezu){
+                    x = xrow + sm;
+                    y = ycol + 1;
+
+                    if(is_king_safe(na_potezu,xrow,ycol,x,y)) return true;
+                }
+
+                if(on_passant[0] != -1){
+                    x = xrow;
+                    y = ycol;
+
+                    if( x == on_passant[0] && (y - 1 == on_passant[1] || y + 1 == on_passant[1])){
+                        if(is_king_safe(na_potezu,xrow,ycol,x + sm,on_passant[1])) return true;
+                    }
+                }
+
+                return false;
+            }
+
+            var x = kings[color][0];
+            var y = kings[color][1];
+
+            for(var i = -1; i < 2; i ++){
+                for(var j = -1; j < 2; j ++){
+                    if(i == 0 && j == 0){
+                        if(is_king_safe(color,x,y,x,y)){
+                            console.log("Kralj se može pomaknuti na", x , y);
+                            return false;
+                        }
+                    }
+                    kings[color][0] = x + i;
+                    kings[color][1] = y + j;
+
+                    if(in_board(kings[color][0],kings[color][1]) && ploca[kings[color][0]][kings[color][1]][0] == '.' && is_king_safe(color,x,y,kings[color][0],kings[color][1])){
+                        console.log("Kralj se može pomaknuti na", x + i , y + j);
+                        kings[color][0] = x;
+                        kings[color][1] = y;
+                        return false;
+                    } 
+
+                    kings[color][0] = x;
+                    kings[color][1] = y;
+                }
+            }i
+
+            for(var i = 0; i < 8; i ++){
+                for(var j = 0; j < 8; j ++){
+                    if(ploca[i][j][0] != '.' && ploca[i][j][0][1] == na_potezu){
+                        if(ploca[i][j][0][0] == 'R' && simR(i,j)){
+                            console.log(i,j);
+                            return false;
+                        }
+                        else if(ploca[i][j][0][0] == 'B' && simB(i,j)){
+                            console.log(i,j);
+                            return false;
+                        } 
+                        else if(ploca[i][j][0][0] == 'Q' && simQ(i,j)){
+                            console.log(i,j);
+                            return false;
+                        }
+
+                        else if(ploca[i][j][0][0] == 'N' && simN(i,j)){
+                            console.log(i,j);
+                            return false;
+                        } 
+                        else if(ploca[i][j][0][0] == 'P' && simP(i,j)){
+                            console.log(i,j);
+                            return false;
+                        } 
+
+                    }
+                }
+            }
+
+            return true;
+        }
+
         $(document).ready(function() {
+            $('.slika').empty(); // Clear any existing content
+            $('<img>').attr('src', 'Kw.png').appendTo('.slika');
+
             var boardSize = 8;
             var isWhite = true;
 
@@ -204,7 +387,8 @@
                     var cellClass = isWhite ? "white" : "black";
                     
                     if(ploca[i][j][0] != '.'){
-                        var cell = $("<button>"+ ploca[i][j][0] + napravi_hp_bar(ploca[i][j][1] , 0) + "</button>");
+                        var cell = $("<button>"+ napravi_hp_bar(ploca[i][j][1] , 0) + "</button>");
+                        $('<img>').attr('src', ploca[i][j][0] + '.png').appendTo(cell);
                     }
 
                     else{
@@ -285,7 +469,7 @@
                                 if(ploca[current_piece[0]][current_piece[1]][0][0] == 'P' &&  row == (on_passant[0] + pomocna_koordinata) && col == on_passant[1] ){
                                     id_button = "#" + on_passant[0].toString()  + on_passant[1].toString();
                                     ploca[on_passant[0]][on_passant[1]] = ['.',0];
-                                    $(id_button).text("");
+                                    $(id_button).empty();
                                 }
                                 on_passant = [-1,-1];
                             }
@@ -309,14 +493,15 @@
                                 ploca[row][col] = ploca[current_piece[0]][current_piece[1]];
 
                                 var newSegment = $( napravi_hp_bar(ploca[current_piece[0]][current_piece[1]][1], hp_stats[ploca[current_piece[0]][current_piece[1]][0][0]] - ploca[current_piece[0]][current_piece[1]][1]));
-                                $(id_button).text(ploca[current_piece[0]][current_piece[1]][0]);
+                                $(id_button).empty();
+                                $('<img>').attr('src', ploca[current_piece[0]][current_piece[1]][0] + '.png').appendTo(id_button);
+                                
                                 $(id_button).append(newSegment);
                             
                                 ploca[current_piece[0]][current_piece[1]] = ['.',0];
                             
                                 id_button = "#" + current_piece[0].toString()  + current_piece[1].toString();
                                 $(id_button).empty();
-                                $(id_button).text("");
 
                                 current_piece[0] = row;
                                 current_piece[1] = col;
@@ -326,14 +511,21 @@
                                 ploca[row][col][1] -= attack_stats[ploca[current_piece[0]][current_piece[1]][0][0]];
                                 
                                 console.log("hp je sada", ploca[row][col][1]);
-
-                                $(id_button).empty();
+                                
                                 var newSegment = $( napravi_hp_bar(ploca[row][col][1], hp_stats[ploca[row][col][0][0]] - ploca[row][col][1]));
-                                $(id_button).text(ploca[row][col][0]);
                                 $(id_button).append(newSegment);
                             }
                                 
                             promjeni_tko_je_na_potezu();
+
+                            //ako je matiran
+                            if(check_mate(na_potezu)){
+                                console.log("Izgubio je igru", na_potezu);
+
+                                $("#luzer").text("Izgubio je igru " + na_potezu);
+
+                                gotovo = 1;
+                            }
                         }
 
                         //citimo plocu
@@ -353,7 +545,7 @@
                             }
                         }
 
-                        if(kliknuo || ploca[row][col][0] == '.' || ploca[row][col][0][1] != na_potezu){
+                        if(gotovo || kliknuo || ploca[row][col][0] == '.' || ploca[row][col][0][1] != na_potezu){
                             console.log("Tocka");
 
                             current_piece[0] = -1;
