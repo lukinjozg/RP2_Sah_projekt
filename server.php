@@ -165,12 +165,12 @@ else if ($action == 'register') { // registracija
     sendJSONandExit($response);
 }
 else if ($action === 'join') { // pokreni igru
+    $user = $_POST['user'];
     if (isset($_SESSION['gameid'][$user])){
         $response = ['success' => false, 'error' => 'User already in game.'];
         sendJSONandExit($response);
     }
     $pairId = findWaitingPair();
-    $user = $_POST['user'];
     if ($pairId !== null) {
         $_SESSION['status'][$pairId] = 'paired';
         $_SESSION['gameid'][$user] = $pairId;
@@ -200,6 +200,7 @@ else if ($action === 'reach') { // je li protivnik napravio potez
         $lastPlayer = $_SESSION['last'][$pairId];
     }
 
+    $lastBoard = $_SESSION['board'][$pairId];
     $response = ['success' => true, 'board' => $lastBoard];
     sendJSONandExit($response);
 }
