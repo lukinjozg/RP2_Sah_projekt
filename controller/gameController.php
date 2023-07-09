@@ -87,8 +87,10 @@ class GameController
                     break;
                 }
             }
-
-            unset($_SESSION['gameid'][$drugi]);
+            
+            if(!empty($drugi)){
+                unset($_SESSION['gameid'][$drugi]);
+            }
 
             unset($_SESSION['status'][$pairId]);
             unset($_SESSION['last'][$pairId]);
