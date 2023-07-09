@@ -6,6 +6,15 @@ require_once 'db.class.php';
 
 $db = DB::getConnection();
 
+function sendJSONandExit( $message )
+{
+    // Kao izlaz skripte pošalji $message u JSON formatu i prekini izvođenje.
+    header( 'Content-type:application/json;charset=utf-8' );
+    echo json_encode( $message );
+    flush();
+    exit( 0 );
+}
+
 function generatePairId() {
     for ($i = 0; $i < 16; $i++) {
         $pairId = dechex($i);
@@ -52,8 +61,7 @@ $action = isset($_POST['action']) ? $_POST['action'] : '';
 if ($action == 'gameover') { // poziva se kad user pobjedi
     if (!isset($_POST['user'])) {
         $response = ['success' => false, 'error' => 'User empty'];
-        echo json_encode($response);
-        exit;
+        sendJSONandExit($response);
     }
     $ending = $_POST['ending']; // pise 'win', 'lose' ili 'draw'
     if ($ending == 'win') {
@@ -67,30 +75,30 @@ if ($action == 'gameover') { // poziva se kad user pobjedi
     }
     else {
         $response = ['success' => false, 'error' => 'Invalid game ending'];
-        echo json_encode($response);
-        exit;
+        sendJSONandExit($response);
     }
     
-    if ($_SESSION['status'][$_SESSION['gameid'][$_POST['user']]] == 'paired') {
-        $_SESSION['status'][$_SESSION['gameid'][$_POST['user']]] = 'waiting';
+    $pairId = $_SESSION['gameid'][$_POST['user']];
+    if ($_SESSION['status'][$pairId] == 'paired') {
+        $_SESSION['status'][$pairId] = 'waiting';
     }
-    else if ($_SESSION['status'][$_SESSION['gameid'][$_POST['user']]] == 'waiting') {
-        unset($_SESSION['status'][$_SESSION['gameid'][$_POST['user']]]);
+    else if ($_SESSION['status'][$pairId] == 'waiting') {
+        unset($_SESSION['status'][$pairId]);
+        unset($_SESSION['last'][$pairId]);
     }
-    $_SESSION['board'][$_SESSION['gameid'][$_POST['user']]] = [];
+    $_SESSION['board'][$pairId] = [];
     unset($_SESSION['gameid'][$_POST['user']]);
 
     // za svakog igraca se zasebno zove win/lose/draw
     // ne treba updateat bodove koje drugi igrac gubi
 
     $response = ['success' => true];
-    echo json_encode($response);
+    sendJSONandExit($response);
 }
 else if ($action == 'profile') { // pokazivanje profila
     if (!isset($_POST['user'])) {
         $response = ['success' => false, 'error' => 'User empty'];
-        echo json_encode($response);
-        exit;
+        sendJSONandExit($response);
     }
     $user = $_POST['user'];
     $query = "SELECT * FROM rating_changes WHERE username = :username";
@@ -98,17 +106,19 @@ else if ($action == 'profile') { // pokazivanje profila
     $statement->execute(array('username' => $user));
     $result = $statement->fetchAll();
 
-    if ($_SESSION['status'][$_SESSION['gameid'][$_POST['user']]] == 'paired') {
-        $_SESSION['status'][$_SESSION['gameid'][$_POST['user']]] = 'waiting';
+    $pairId = $_SESSION['gameid'][$_POST['user']];
+    if ($_SESSION['status'][$pairId] == 'paired') {
+        $_SESSION['status'][$pairId] = 'waiting';
     }
-    else if ($_SESSION['status'][$_SESSION['gameid'][$_POST['user']]] == 'waiting') {
-        unset($_SESSION['status'][$_SESSION['gameid'][$_POST['user']]]);
+    else if ($_SESSION['status'][$pairId] == 'waiting') {
+        unset($_SESSION['status'][$pairId]);
+        unset($_SESSION['last'][$pairId]);
     }
-    $_SESSION['board'][$_SESSION['gameid'][$_POST['user']]] = [];
+    $_SESSION['board'][$pairId] = [];
     unset($_SESSION['gameid'][$_POST['user']]);
 
     $response = ['success' => true, 'table' => $result];
-    echo json_encode($response);
+    sendJSONandExit($response);
 }
 else if ($action == 'rankings') { // pokazivanje rankingsa
     $query = "SELECT * FROM users ORDER BY rating";
@@ -116,25 +126,26 @@ else if ($action == 'rankings') { // pokazivanje rankingsa
     $statement->execute();
     $result = $statement->fetchAll();
 
-    if ($_SESSION['status'][$_SESSION['gameid'][$_POST['user']]] == 'paired') {
-        $_SESSION['status'][$_SESSION['gameid'][$_POST['user']]] = 'waiting';
+    $pairId = $_SESSION['gameid'][$_POST['user']];
+    if ($_SESSION['status'][$pairId] == 'paired') {
+        $_SESSION['status'][$pairId] = 'waiting';
     }
-    else if ($_SESSION['status'][$_SESSION['gameid'][$_POST['user']]] == 'waiting') {
-        unset($_SESSION['status'][$_SESSION['gameid'][$_POST['user']]]);
+    else if ($_SESSION['status'][$pairId] == 'waiting') {
+        unset($_SESSION['status'][$pairId]);
+        unset($_SESSION['last'][$pairId]);
     }
-    $_SESSION['board'][$_SESSION['gameid'][$_POST['user']]] = [];
+    $_SESSION['board'][$pairId] = [];
     unset($_SESSION['gameid'][$_POST['user']]);
 
     $response = ['success' => true, 'table' => $result];
-    echo json_encode($response);
+    sendJSONandExit($response);
 }
 else if ($action == 'login') { // ulogiraj se
     $user = $_POST['user'];
     $pass = $_POST['pass'];
     if (!isset($user) || !isset($pass)) {
         $response = ['success' => false, 'error' => 'User and password cant be empty'];
-        echo json_encode($response);
-        exit;
+        sendJSONandExit($response);
     }
     $query = "SELECT * FROM users WHERE username = :username";
     $statement = $db->prepare($query);
@@ -145,21 +156,19 @@ else if ($action == 'login') { // ulogiraj se
         foreach ($result as $osoba) {
             if (password_verify($pass, $osoba['password'])) {
                 $response = ['success' => true];
-                echo json_encode($response);
-                exit;
+                sendJSONandExit($response);
             }
         }
     }
     $response = ['success' => false, 'error' => 'Invalid username or password.'];
-    echo json_encode($response);
+    sendJSONandExit($response);
 }
 else if ($action == 'register') { // registracija
     $user = $_POST['user'];
     $pass = $_POST['pass'];
     if(!isset($user) || !isset($pass)){
         $response = ['success' => false, 'error' => 'User and password cant be empty'];
-        echo json_encode($response);
-        exit;
+        sendJSONandExit($response);
     }
     $query = "SELECT * FROM users WHERE username = :username";
     $statement = $db->prepare($query);
@@ -168,28 +177,29 @@ else if ($action == 'register') { // registracija
     
     if ($result) {
         $response = ['success' => false, 'error' => 'User already exists.'];
-        echo json_encode($response);
-        exit;
+        sendJSONandExit($response);
     }
 
     $statement = $db->prepare('INSERT INTO users (username, password, wins, losses, rating) VALUES (:username, :password, 0, 0, 1500)');
     $statement->execute(array('username' => $user, 'password' => password_hash($pass, PASSWORD_DEFAULT)));
     
     $response = ['success' => true];
-    echo json_encode($response);
+    sendJSONandExit($response);
 }
 else if ($action === 'join') { // pokreni igru
     $pairId = findWaitingPair();
+    $user = $_POST['user'];
     if ($pairId !== null) {
         $_SESSION['status'][$pairId] = 'paired';
-        $_SESSION['gameid'][$_POST['user']] = $pairId;
+        $_SESSION['gameid'][$user] = $pairId;
         $response = ['success' => true, 'turn' => 'white'];
     }
     else {
         $pairId = generatePairId();
         if ($pairId !== NULL) {
             $_SESSION['status'][$pairId] = 'waiting';
-            $_SESSION['gameid'][$_POST['user']] = $pairId;
+            $_SESSION['gameid'][$user] = $pairId;
+            $_SESSION['last'][$pairId] = $user;
             $response = ['success' => true, 'turn' => 'black'];
         }
         else {
@@ -197,34 +207,39 @@ else if ($action === 'join') { // pokreni igru
         }
     }
 
-    echo json_encode($response);
+    sendJSONandExit($response);
 }
 else if ($action === 'reach') { // je li protivnik napravio potez
-    $pairId = $_SESSION['gameid'][$_POST['user']];
-    $lastBoard = getLastBoard($pairId);
+    $user = $_POST['user'];
+    $pairId = $_SESSION['gameid'][$user];
+    $lastPlayer = $_SESSION['last'][$pairId];
+    while ($lastPlayer == $user) {
+        usleep(10000); // sustav malo odmori dok pri cekanju novog rezultata
+        $lastPlayer = $_SESSION['last'][$pairId];
+    }
 
     $response = ['success' => true, 'board' => $lastBoard];
-    echo json_encode($response);
+    sendJSONandExit($response);
 }
 else if ($action === 'send') { // napravi potez
     $pairId = $_SESSION['gameid'][$_POST['user']];
-    $player = isset($_POST['user']) ? $_POST['user'] : '';
+    $user = isset($_POST['user']) ? $_POST['user'] : '';
     $board = isset($_POST['board']) ? $_POST['board'] : [];
 
-    if (empty($player) || empty($board)) {
-        $response = ['success' => false, 'error' => 'Player and board cannot be empty'];
-        echo json_encode($response);
-        exit;
+    if (empty($user) || empty($board)) {
+        $response = ['success' => false, 'error' => 'User and board cannot be empty'];
+        sendJSONandExit($response);
     }
 
     storeLastBoard($pairId, $board);
+    $_SESSION['last'][$pairId] = $user;
 
     $response = ['success' => true];
-    echo json_encode($response);
+    sendJSONandExit($response);
 }
 else { // netocna naredba
     $response = ['success' => false, 'error' => 'Invalid action'];
-    echo json_encode($response);
+    sendJSONandExit($response);
 }
 
 ?>
