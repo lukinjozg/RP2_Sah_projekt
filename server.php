@@ -63,34 +63,48 @@ if ($action == 'gameover') { // poziva se kad user pobjedi
         $response = ['success' => false, 'error' => 'User empty'];
         sendJSONandExit($response);
     }
+    $user = $_POST['user'];
+    
+    $pairId = $_SESSION['gameid'][$user];
+    
+    if (!isset($_SESSION['gameid'][$user])) { // user nije u igri
+        $response = ['success' => false, 'error' => 'User not in game'];
+        sendJSONandExit($response);
+    }
+    unset($_SESSION['gameid'][$user]);
+
+    $drugi = '';
+    foreach ($_SESSION['gameid'] as $ime => $broj) {
+        if ($broj == $pairId) {
+            $drugi = $ime;
+            break;
+        }
+    }
+    
+    if(!empty($drugi)){
+        unset($_SESSION['gameid'][$drugi]);
+    }
+
+    unset($_SESSION['status'][$pairId]);
+    unset($_SESSION['last'][$pairId]);
+
+    $_SESSION['board'][$pairId] = [];
+
     $ending = $_POST['ending']; // pise 'win', 'lose' ili 'draw'
+    //potrebno je za oba igraca updateati ratinge
     if ($ending == 'win') {
-        // ovdje napisati kod za updateat tablice sa ratinzima
+        // ovdje pozvati funkciju za dodati rating i update tablice
     }
     else if ($ending == 'lose') {
-        // ovdje napisati kod za updateat tablice sa ratinzima
+        // ovdje pozvati funckiju za oduzeti rating i update tablice
     }
     else if ($ending == 'draw') {
-        // ovdje napisati kod za updateat tablice sa ratinzima
+        // ovdje pozvati funkciju za update tablice
     }
     else {
         $response = ['success' => false, 'error' => 'Invalid game ending'];
         sendJSONandExit($response);
     }
-    
-    $pairId = $_SESSION['gameid'][$_POST['user']];
-    if ($_SESSION['status'][$pairId] == 'paired') {
-        $_SESSION['status'][$pairId] = 'waiting';
-    }
-    else if ($_SESSION['status'][$pairId] == 'waiting') {
-        unset($_SESSION['status'][$pairId]);
-        unset($_SESSION['last'][$pairId]);
-    }
-    $_SESSION['board'][$pairId] = [];
-    unset($_SESSION['gameid'][$_POST['user']]);
-
-    // za svakog igraca se zasebno zove win/lose/draw
-    // ne treba updateat bodove koje drugi igrac gubi
 
     $response = ['success' => true];
     sendJSONandExit($response);
@@ -195,7 +209,7 @@ else if ($action === 'reach') { // je li protivnik napravio potez
     $user = $_POST['user'];
     $pairId = $_SESSION['gameid'][$user];
     $lastPlayer = $_SESSION['last'][$pairId];
-    while ($lastPlayer == $user) {
+    while (isset($lastPlayer) && $lastPlayer == $user) {
         usleep(10000); // sustav malo odmori dok pri cekanju novog rezultata
         $lastPlayer = $_SESSION['last'][$pairId];
     }

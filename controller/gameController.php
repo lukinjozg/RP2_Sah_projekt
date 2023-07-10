@@ -147,7 +147,7 @@ class GameController
             $user = $_POST['user'];
             $pairId = $_SESSION['gameid'][$user];
             $lastPlayer = $_SESSION['last'][$pairId];
-            while ($lastPlayer == $user) {
+            while (isset($lastPlayer) && $lastPlayer == $user) {
                 usleep(10000); // sustav malo odmori dok pri cekanju novog rezultata
                 $lastPlayer = $_SESSION['last'][$pairId];
             }
