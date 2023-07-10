@@ -10,7 +10,7 @@
     
     <div class="chessboard"></div>
 
-    <p class="username-box"> Waiting... </p>
+    <p class="username-box"> Igrac1</p>
     <p id="luzer"></p>
     
     <script>
@@ -58,6 +58,56 @@
             R: 5,
             B: 2,
             P: 1
+        }
+
+        function cisti_plocu(){
+            for (var i = 0; i < 8; i++) {
+                for (var j = 0; j < 8; j++) {
+                    id_button = "#" + i.toString() + j.toString();
+
+                    if(ploca[i][j][0] != '.'){
+                        var newSegment = $( napravi_hp_bar(ploca[i][j][1], hp_stats[ploca[i][j][0][0]] - ploca[i][j][1]));
+                        $(id_button).empty();
+                        $('<img>').attr('src', ploca[i][j][0] + '.png').appendTo(id_button);
+                                
+                        $(id_button).append(newSegment);
+                    }
+
+                    else{
+                        $(id_button).empty();
+                    }
+
+                    $(id_button).removeClass();
+
+                    if((i+j)%2 == 0){
+                        $(id_button).addClass('white');
+                    }
+
+                    else{
+                        $(id_button).addClass('black');
+                    }
+                }
+            }
+        }
+
+        function okreni_plocu(){
+            var pcopy = [];
+            for(var i = 0; i < 8; i ++){
+                pcopy[i] = [];
+                for(var j = 0; j < 8; j ++){
+                    pcopy[i][j] = [];
+                    pcopy[i][j][0] = ploca[7 - i][7 - j][0];
+                    pcopy[i][j][1] = ploca[7 - i][7 - j][1];
+                }
+            }
+
+
+            for(var i = 0; i < 8; i ++){
+                for(var j = 0; j < 8; j ++){
+                    ploca[i][j][0] = pcopy[i][j][0];
+                    ploca[i][j][1] = pcopy[i][j][1];
+                }
+            }
         }
         
         function in_board(x, y){
@@ -373,7 +423,81 @@
             return true;
         }
 
+        function Signal() {
+            console.log('šaljem 1. signal');
+            $.ajax({
+                url: 'server1.php',
+                method: 'GET',
+                data:{
+                   player2: 'igrac' 
+                },
+                dataType: 'json',
+                success: function() {
+                    console.log("Došo je signal");
+                },
+                error: function() {
+                    console.error('Error');
+                    // Retry the request in case of errors
+                }
+            });
+        }
+
+        function SendBoard() {
+            console.log('šaljem 2. signal');
+            $.ajax({
+                url: 'server1.php',
+                method: 'GET',
+                data:{
+                    board: ploca,
+                    igracw: 1 
+                },
+                dataType: 'json',
+                success: function() {
+                },
+                error: function() {
+                    console.error('Error');
+                    // Retry the request in case of errors
+                }
+            });
+        }
+
+        function AcceptBoard() {
+            $.ajax({
+                url: 'server1.php',
+                method: 'GET',
+                data:{
+                    trebamw: 1 
+                },
+                dataType: 'json',
+                success: function(data) {
+                    for(var i = 0; i  < 7; i ++){
+                        for(var j = 0; j < 7; j ++){
+                            ploca[i][j][0] = data.ploca[i][j][0];
+                            ploca[i][j][1] = data.ploca[i][j][1];
+
+                            if(data.ploca[i][j][0][0] == 'K'){
+                                kings[data.ploca[i][j][0][1]][0] = i;
+                                kings[data.ploca[i][j][0][1]][1] = j;
+                            }
+
+                            //možda za en passant
+                        }
+                    }
+
+                    promjeni_tko_je_na_potezu();
+                    cisti_plocu();
+                },
+                error: function() {
+                    console.error('Error');
+                    // Retry the request in case of errors
+                    AcceptBoard();
+                }
+            });
+        }
+
         $(document).ready(function() {
+            Signal();
+
             var boardSize = 8;
             var isWhite = true;
 
@@ -523,26 +647,15 @@
 
                                 gotovo = 1;
                             }
+
+                            SendBoard();
+                            AcceptBoard();
                         }
 
-                        //citimo plocu
-                        for (var i = 0; i < boardSize; i++) {
-                            for (var j = 0; j < boardSize; j++) {
-                                id_button = "#" + i.toString() + j.toString();
+                        //cistimo plocu
+                        cisti_plocu();
 
-                                $(id_button).removeClass();
-
-                                if((i+j)%2 == 0){
-                                    $(id_button).addClass('white');
-                                }
-
-                                else{
-                                    $(id_button).addClass('black');
-                                }
-                            }
-                        }
-
-                        if(gotovo || kliknuo || ploca[row][col][0] == '.' || ploca[row][col][0][1] != na_potezu){
+                        if(na_potezu == 'b' || gotovo || kliknuo || ploca[row][col][0] == '.' || ploca[row][col][0][1] != na_potezu){
                             console.log("Tocka");
 
                             current_piece[0] = -1;
