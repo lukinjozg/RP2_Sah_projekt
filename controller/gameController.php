@@ -81,11 +81,11 @@ class GameController
             unset($_SESSION['gameid'][$user]);
 
             $drugi = '';
-            foreach ($_SESSION['gameid'] as $ime => $broj) {
-                if ($broj == $pairId) {
-                    $drugi = $ime;
-                    break;
-                }
+            if (isset($_SESSION['white'][$pairId]) && $_SESSION['white'][$pairId] != $user) {
+                $drugi = $_SESSION['white'][$pairId];
+            }
+            else if(isset($_SESSION['black'][$pairId]) && $_SESSION['black'][$pairId] != $user){
+                $drugi = $_SESSION['black'][$pairId];
             }
             
             if(!empty($drugi)){
@@ -94,6 +94,8 @@ class GameController
 
             unset($_SESSION['status'][$pairId]);
             unset($_SESSION['last'][$pairId]);
+            unset($_SESSION['white'][$pairId]);
+            unset($_SESSION['black'][$pairId]);
 
             $_SESSION['board'][$pairId] = [];
 
@@ -118,23 +120,33 @@ class GameController
         }
         else if ($action === 'join') { // pokreni igru
             $user = $_POST['user'];
-            if (isset($_SESSION['gameid'][$user])){
+            if (isset($_SESSION['gameid'][$user])) {
                 $response = ['success' => false, 'error' => 'User already in game.'];
                 sendJSONandExit($response);
             }
             $pairId = findWaitingPair();
             if ($pairId !== null) {
+                $_SESSION['white'][$pairId] = $user;
                 $_SESSION['status'][$pairId] = 'paired';
                 $_SESSION['gameid'][$user] = $pairId;
-                $response = ['success' => true, 'turn' => 'white'];
+                $response = ['success' => true, 'turn' => 'white', 'opponent' => $_SESSION['black'][$pairId]];
             }
             else {
                 $pairId = generatePairId();
                 if ($pairId !== NULL) {
+                    $_SESSION['black'][$pairId] = $user;
                     $_SESSION['status'][$pairId] = 'waiting';
                     $_SESSION['gameid'][$user] = $pairId;
                     $_SESSION['last'][$pairId] = $user;
-                    $response = ['success' => true, 'turn' => 'black'];
+                    while (isset($_SESSION['status'][$pairId]) && $_SESSION['status'][$pairId] == 'waiting') {
+                        usleep(10000); // sustav se malo odmori
+                    }
+
+                    if (!isset($_SESSION['status'][$pairId])) {
+                        $response = ['success' => false, 'error' => 'Drugi igrac je izasao iz igre'];
+                        sendJSONandExit($response);
+                    }
+                    $response = ['success' => true, 'turn' => 'black', 'opponent' => $_SESSION['white'][$pairId]];
                 }
                 else {
                     $response = ['success' => false, 'error' => 'No available pair IDs'];
@@ -146,13 +158,24 @@ class GameController
         else if ($action === 'reach') { // je li protivnik napravio potez
             $user = $_POST['user'];
             $pairId = $_SESSION['gameid'][$user];
+            
+            if (!isset($pairId)) {
+                $response = ['success' => false, 'error' => 'Drugi igrac je izasao iz igre'];
+                sendJSONandExit($response);
+            }
+
             $lastPlayer = $_SESSION['last'][$pairId];
+
             while (isset($lastPlayer) && $lastPlayer == $user) {
                 usleep(10000); // sustav malo odmori dok pri cekanju novog rezultata
                 $lastPlayer = $_SESSION['last'][$pairId];
             }
 
             $lastBoard = $_SESSION['board'][$pairId];
+            if (empty($lastBoard)) { // drugi igrac je u meduvremenu izasao iz igre
+                $response = ['success' => false, 'error' => 'Drugi igrac je izasao iz igre'];
+                sendJSONandExit($response);
+            }
             $response = ['success' => true, 'board' => $lastBoard];
             sendJSONandExit($response);
         }
@@ -163,6 +186,11 @@ class GameController
 
             if (empty($user) || empty($board)) {
                 $response = ['success' => false, 'error' => 'User and board cannot be empty'];
+                sendJSONandExit($response);
+            }
+
+            if (!isset($pairId)) {
+                $response = ['success' => false, 'error' => 'Drugi igrac je izasao iz igre'];
                 sendJSONandExit($response);
             }
 
