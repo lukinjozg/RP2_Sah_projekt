@@ -61,7 +61,7 @@ else{
             $_SESSION['treba'] = 'w';
         }
 
-        if($SESSION['treba'] == 'w' && $_SESSION['poslao'] == 'b'){
+        if($_SESSION['treba'] == 'w' && $_SESSION['poslao'] == 'b'){
             $ploca = [];
             $ploca['ploca'] = $_SESSION['ploca'];
             $_SESSION['move'] = 'w';

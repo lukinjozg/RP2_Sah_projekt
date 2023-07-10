@@ -470,11 +470,9 @@
                 },
                 dataType: 'json',
                 success: function(data) {
+                    ploca = data.ploca;
                     for(var i = 0; i  < 7; i ++){
                         for(var j = 0; j < 7; j ++){
-                            ploca[i][j][0] = data.ploca[i][j][0];
-                            ploca[i][j][1] = data.ploca[i][j][1];
-
                             if(data.ploca[i][j][0][0] == 'K'){
                                 kings[data.ploca[i][j][0][1]][0] = i;
                                 kings[data.ploca[i][j][0][1]][1] = j;
@@ -484,12 +482,18 @@
                         }
                     }
 
+                    for(var i = 0; i < 8; i ++){
+                            console.log(ploca[i][0][0],ploca[i][1][0],ploca[i][2][0],ploca[i][3][0],ploca[i][4][0],ploca[i][5][0],ploca[i][6][0],ploca[i][7][0]);
+                        }
+
+                        for(var i = 0; i < 8; i ++){
+                            console.log(ploca[i][0][1],ploca[i][1][1],ploca[i][2][1],ploca[i][3][1],ploca[i][4][1],ploca[i][5][1],ploca[i][6][1],ploca[i][7][1]);
+                        }
+
                     promjeni_tko_je_na_potezu();
                     cisti_plocu();
                 },
                 error: function() {
-                    console.error('Error');
-                    // Retry the request in case of errors
                     AcceptBoard();
                 }
             });
