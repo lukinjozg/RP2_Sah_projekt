@@ -6,15 +6,15 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <p id ='pb' class="username-box"> Mile_piletina </p>
+    <p id = 'pw' class="username-box"> Waiting... </p>
     
     <div class="chessboard"></div>
 
-    <p id = 'pw' class="username-box"> Igrac1</p>
+    <p id = 'pb' class="username-box"> Mile_piletina </p>
     <p id="luzer"></p>
     
     <script>
-        //K - kralj
+        //K - kralj   
         //Q - kraljica
         //B - bishop/lovac
         //P - pijun
@@ -28,18 +28,18 @@
         var gotovo = 0;
 
         var kings = {
-            b: [0,4],
-            w: [7,4]
+            w: [0,3],
+            b: [7,3]
         }
 
-        var ploca = [[['Rb',5],['Nb',2],['Bb',2],['Qb',3],['Kb',4],['Bb',2],['Nb',2],['Rb',5]],
-                 [['Pb',1],['Pb',1],['Pb',1],['Pb',1],['Pb',1],['Pb',1],['Pb',1],['Pb',1]],
-                 [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
-                 [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
-                 [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
-                 [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
+        var ploca = [[['Rw',5],['Nw',2],['Bw',2],['Kw',4],['Qw',3],['Bw',2],['Nw',2],['Rw',5]],
                  [['Pw',1],['Pw',1],['Pw',1],['Pw',1],['Pw',1],['Pw',1],['Pw',1],['Pw',1]],
-                 [['Rw',5],['Nw',2],['Bw',2],['Qw',3],['Kw',4],['Bw',2],['Nw',2],['Rw',5]]];
+                 [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
+                 [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
+                 [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
+                 [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
+                 [['Pb',1],['Pb',1],['Pb',1],['Pb',1],['Pb',1],['Pb',1],['Pb',1],['Pb',1]],
+                 [['Rb',5],['Nb',2],['Bb',2],['Kb',4],['Qb',3],['Bb',2],['Nb',2],['Rb',5]]];
 
         var na_potezu = 'w';
 
@@ -61,6 +61,98 @@
             R: 5,
             B: 2,
             P: 1
+        }
+
+        function napravi_promociju(x,y, color){
+            promocija = 1;
+            $("#promocija").text("Izaberi figuru za promociju: ");
+
+            promotion('Q', color,x,y);
+
+            promotion('N', color,x,y);
+
+            promotion('R', color,x,y);
+
+            promotion('B', color,x,y);
+        }
+
+        function promotion(figura, color,x,y){
+            var fig = '';
+            fig = figura + color;
+
+            var button = $("<button>" + fig + "</button>");
+  
+            button.click(function() {
+                ploca[x][y] = [fig, hp_stats[figura]];
+
+                promocija = 0;
+
+                cisti_plocu();
+
+                $("#promocija").empty();
+            });
+
+            $("#promocija").append(button);
+        }
+
+        //castles
+        castlesw = 0;
+        castlesb = 0;
+
+        kingw_moved = false;
+        kingb_moved = false;
+
+        rb1_moved = false; // levi
+        rb2_moved = false; // desni
+
+        rw1_moved = false; // levi
+        rw2_moved = false; // desni
+
+        //kralja ništa nemože ubiti iz prve pa nemoramo sve gledati
+        function castles(color){
+            var slobodno = true;
+
+            if(color == 'w'){
+                if(kingw_moved == true || ploca[7][4][1] != 4) return false;
+
+                if(!is_king_safe(color,0,0,0,0)) return false;
+
+                console.log("kralj je na mjestu siguran");
+
+                if(rw1_moved == false && ploca[7][0][1] == 5){
+                    for(var i = 0; i < 3; i ++){
+                        if(ploca[7][1 + i][0] != '.'){
+                            console.log("polje spriječava rošadu:",7, i + 1);
+                            slobodno = false;
+                            break
+                        }
+                    }
+                    
+                    if(slobodno){
+                        make_circle(7,0);
+                    }
+                }
+
+                if(rw2_moved == false && ploca[7][7][1] == 5){
+                    slobodno = true;
+
+                    console.log("kula D je zdrava");
+
+                    for(var i = 0; i < 2; i ++){
+                        if(ploca[7][6 - i][0] != '.'){
+                            console.log("polje spriječava rošadu:",7, 6 - i);
+                            slobodno = false;
+                            break
+                        }
+                    }
+
+
+                    if(slobodno){
+                        make_circle(7,7);
+                    }
+                }
+            }
+            return true;
         }
 
         var en_passb = [0,0,0,0,0,0,0,0];
@@ -92,6 +184,26 @@
             console.log("on passant;",on_passant[0], on_passant[1]);
         }
 
+        function okreni_plocu(){
+            var pcopy = [];
+            for(var i = 0; i < 8; i ++){
+                pcopy[i] = [];
+                for(var j = 0; j < 8; j ++){
+                    pcopy[i][j] = [];
+                    pcopy[i][j][0] = ploca[7 - i][7 - j][0];
+                    pcopy[i][j][1] = ploca[7 - i][7 - j][1];
+                }
+            }
+
+
+            for(var i = 0; i < 8; i ++){
+                for(var j = 0; j < 8; j ++){
+                    ploca[i][j][0] = pcopy[i][j][0];
+                    ploca[i][j][1] = pcopy[i][j][1];
+                }
+            }
+        }
+
         function cisti_plocu(){
             for (var i = 0; i < 8; i++) {
                 for (var j = 0; j < 8; j++) {
@@ -118,26 +230,6 @@
                     else{
                         $(id_button).addClass('black');
                     }
-                }
-            }
-        }
-
-        function okreni_plocu(){
-            var pcopy = [];
-            for(var i = 0; i < 8; i ++){
-                pcopy[i] = [];
-                for(var j = 0; j < 8; j ++){
-                    pcopy[i][j] = [];
-                    pcopy[i][j][0] = ploca[7 - i][7 - j][0];
-                    pcopy[i][j][1] = ploca[7 - i][7 - j][1];
-                }
-            }
-
-
-            for(var i = 0; i < 8; i ++){
-                for(var j = 0; j < 8; j ++){
-                    ploca[i][j][0] = pcopy[i][j][0];
-                    ploca[i][j][1] = pcopy[i][j][1];
                 }
             }
         }
@@ -343,7 +435,7 @@
 
                 var x ,y;
 
-                if(na_potezu == 'w'){
+                if(na_potezu == 'b'){
                     pocetak = 6;
                     sm = -1;
                 }
@@ -455,27 +547,33 @@
             return true;
         }
 
-        function Signal() {
-            console.log('šaljem 1. signal');
+        function waitForSignal() {
+            console.log("cekam signal");
+
             $.ajax({
                 url: 'server1.php',
                 method: 'GET',
                 data:{
-                   player2: 'igrac' 
+                   player1: 'igrac' 
                 },
                 dataType: 'json',
                 success: function() {
-                    console.log("Došo je signal");
+                    $('#p1').text('igrac1');
+                    console.log('Signal received');
+
+                    AcceptBoard();
                 },
-                error: function() {
+                    error: function() {
                     console.error('Error');
                     // Retry the request in case of errors
+                    waitForSignal();
                 }
             });
         }
 
         function SendBoard() {
             console.log('šaljem 2. signal');
+            okreni_plocu();
 
             $.ajax({
                 url: 'server.php',
@@ -483,7 +581,7 @@
                 data:{
                     action: 'send',
                     board: ploca,
-                    user: username
+                    user: username 
                 },
                 dataType: 'json',
                 success: function() {
@@ -493,6 +591,8 @@
                     // Retry the request in case of errors
                 }
             });
+
+            okreni_plocu();
         }
 
         function AcceptBoard() {
@@ -507,7 +607,7 @@
                 success: function(data) {
                     if(data.success == false){
                         AcceptBoard();
-                        console.log('bijeli pita za potez');
+                        console.log('crni trazi potez');
                     }
 
                     else{
@@ -515,16 +615,16 @@
                         for(var i = 0; i  < 7; i ++){
                             for(var j = 0; j < 7; j ++){
                                 if(data.board[i][j][0][0] == 'K'){
-                                    kings[data.board[i][j][0][1]][0] =  i;
-                                    kings[data.board[i][j][0][1]][1] =  j;
+                                    kings[data.board[i][j][0][1]][0] = 7 - i;
+                                    kings[data.board[i][j][0][1]][1] = 7 - j;
                                 //jer je okrecemo
                                 }
 
                             //možda za en passant
                             }
                         }
-
-                        console.log("ploca je acceptana");
+                    
+                        okreni_plocu();
 
                             for(var i = 0; i < 8; i ++){
                                 console.log(ploca[i][0][0],ploca[i][1][0],ploca[i][2][0],ploca[i][3][0],ploca[i][4][0],ploca[i][5][0],ploca[i][6][0],ploca[i][7][0]);
@@ -540,24 +640,24 @@
                 },
                 error: function() {
                     AcceptBoard();
+                    console.error("ništa se nije poslalo");
                 }
             });
         }
 
         function dodaj_username(){
-            $('#pw').text(username);
+            $('#pb').text(username);
         }
 
         $(document).ready(function() {
-            //Signal();
-
             dodaj_username();
-
+            AcceptBoard();
+            
             var boardSize = 8;
             var isWhite = true;
 
             var current_piece = [-1,-1];
-  
+
             for (var i = 0; i < boardSize; i++) {
                 for (var j = 0; j < boardSize; j++) {
                     var cellClass = isWhite ? "white" : "black";
@@ -685,7 +785,7 @@
                                 var newSegment = $( napravi_hp_bar(ploca[row][col][1], hp_stats[ploca[row][col][0][0]] - ploca[row][col][1]));
                                 $(id_button).append(newSegment);
                             }
-                                
+                            
                             promjeni_tko_je_na_potezu();
 
                             //ako je matiran
@@ -701,10 +801,10 @@
                             AcceptBoard();
                         }
 
-                        //cistimo plocu
+                        //citimo plocu
                         cisti_plocu();
 
-                        if(na_potezu == 'b' || gotovo || kliknuo || ploca[row][col][0] == '.' || ploca[row][col][0][1] != na_potezu){
+                        if(na_potezu == 'w' || gotovo || kliknuo || ploca[row][col][0] == '.' || ploca[row][col][0][1] != na_potezu){
                             console.log("Tocka");
 
                             current_piece[0] = -1;
@@ -720,7 +820,7 @@
                         else if(ploca[row][col][0][0] == 'P'){
                             console.log("Pawn");
 
-                            provjeri_passant('b');
+                            provjeri_passant('w');
 
                             current_piece[0] = row;
                             current_piece[1] = col;
@@ -729,7 +829,7 @@
                             var pocetak = 1;
                             var sm = 1;
 
-                            if(na_potezu == 'w'){
+                            if(na_potezu == 'b'){
                                 pocetak = 6;
                                 sm = -1;
                             }
