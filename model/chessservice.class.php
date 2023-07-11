@@ -6,6 +6,7 @@ require_once __DIR__ . '/rating.class.php';
 
 class ChessService
 {
+
 	function registrationAvailable($username)
 	{
 		try
@@ -29,8 +30,6 @@ class ChessService
 	{
 		$db = DB::getConnection();
 
-		// Ubaci neke korisnike u tablicu users.
-		// Uočimo da ne treba specificirati id koji se automatski poveća kod svakog ubacivanja.
 		try
 		{
 			$st = $db->prepare( 'INSERT INTO users(username, password, wins, losses, rating) VALUES (:username, :password, :wins, :losses, :rating)' );
@@ -162,6 +161,24 @@ class ChessService
 			$db = DB::getConnection();
 			$st = $db->prepare( 'SELECT * FROM users WHERE username=:username' );
 			$st->execute( array( 'username' => $username ) );
+		}
+		catch( PDOException $e ) { exit( 'PDO error ' . $e->getMessage() ); }
+
+		$row = $st->fetch();
+		if( $row === false )
+			return null;
+		else
+			return $row['id'];
+	}
+
+	function updateRating($id, $rating){
+		try
+		{
+			$db = DB::getConnection();
+			$st = $db->prepare( 'UPDATE users SET rating=:rating WHERE id=:id' );
+			$st->bindParam(':id', $id);
+			$st->bindParam(':rating', $rating);
+			$st->execute();
 		}
 		catch( PDOException $e ) { exit( 'PDO error ' . $e->getMessage() ); }
 

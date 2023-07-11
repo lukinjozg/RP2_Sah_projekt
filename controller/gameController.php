@@ -61,6 +61,8 @@ class GameController
 
     public function gameplay()
     {
+        $cs = new ChessService();
+
         session_start();
 
         $action = isset($_POST['action']) ? $_POST['action'] : '';
@@ -100,15 +102,24 @@ class GameController
             $_SESSION['board'][$pairId] = [];
 
             $ending = $_POST['ending']; // pise 'win', 'lose' ili 'draw'
+
+            $ratings = $cs->getLastUserRating($cs->getIdByUsername($_POST['user']));
+            $rating = $ratings->rating;
             //potrebno je za oba igraca updateati ratinge
             if ($ending == 'win') {
                 // ovdje pozvati funkciju za dodati rating i update tablice
+                $id = $cs ->getIdByUsername($user);
+                $cs -> updateRating($id, $rating + 100);
             }
             else if ($ending == 'lose') {
                 // ovdje pozvati funckiju za oduzeti rating i update tablice
+                $id = $cs ->getIdByUsername($user);
+                $cs -> updateRating($id, $rating - 100);
             }
             else if ($ending == 'draw') {
                 // ovdje pozvati funkciju za update tablice
+                $id = $cs ->getIdByUsername($user);
+                $cs -> updateRating($id, $rating);
             }
             else {
                 $response = ['success' => false, 'error' => 'Invalid game ending'];
