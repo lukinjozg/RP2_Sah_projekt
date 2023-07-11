@@ -104,22 +104,25 @@ class GameController
             $ending = $_POST['ending']; // pise 'win', 'lose' ili 'draw'
 
             $ratings = $cs->getLastUserRating($cs->getIdByUsername($_POST['user']));
-            $rating = $ratings->rating;
+            $r1 = $ratings->rating;
+
+            $ratings = $cs->getLastUserRating($cs->getIdByUsername($drugi));
+            $r2 = $ratings->rating;
             //potrebno je za oba igraca updateati ratinge
             if ($ending == 'win') {
                 // ovdje pozvati funkciju za dodati rating i update tablice
                 $id = $cs ->getIdByUsername($user);
-                $cs -> updateRating($id, $rating + 100);
+                $cs -> updateRating($id, $r1 + $cs->getRatingChange($r1, $r2, 1));
             }
             else if ($ending == 'lose') {
                 // ovdje pozvati funckiju za oduzeti rating i update tablice
                 $id = $cs ->getIdByUsername($user);
-                $cs -> updateRating($id, $rating - 100);
+                $cs -> updateRating($id, $r1 + $cs->getRatingChange($r1, $r2, 0));
             }
             else if ($ending == 'draw') {
                 // ovdje pozvati funkciju za update tablice
                 $id = $cs ->getIdByUsername($user);
-                $cs -> updateRating($id, $rating);
+                $cs -> updateRating($id, $r1  + $cs->getRatingChange($r1, $r2, 0.5));
             }
             else {
                 $response = ['success' => false, 'error' => 'Invalid game ending'];

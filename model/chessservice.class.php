@@ -172,9 +172,11 @@ class ChessService
 	}
 
 	function updateRating($id, $rating){
+
+		$db = DB::getConnection();
+
 		try
 		{
-			$db = DB::getConnection();
 			$st = $db->prepare( 'UPDATE users SET rating=:rating WHERE id=:id' );
 			$st->bindParam(':id', $id);
 			$st->bindParam(':rating', $rating);
@@ -182,11 +184,18 @@ class ChessService
 		}
 		catch( PDOException $e ) { exit( 'PDO error ' . $e->getMessage() ); }
 
-		$row = $st->fetch();
-		if( $row === false )
-			return null;
-		else
-			return $row['id'];
+		try
+		{
+			$st = $db->prepare( 'INSERT INTO rating_changes(id_user, rating) VALUES (:id_user, :rating)' );
+
+			$st->execute( array( 'id_user' => $id, 'rating' => $rating ) );
+		}
+		catch( PDOException $e ) { exit( "PDO error (seed_table_users): " . $e->getMessage() ); }
+	}
+
+	function getRatingChange($r1, $r2, $S){
+		$E = 1 / (1 + pow(10, ($r2 - $r1) / 400));
+		return round(30 * ($S - $E));
 	}
 
 };
