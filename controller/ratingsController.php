@@ -33,6 +33,12 @@ class RatingsController
 			exit();
 		}
 
+		if($cs->getIdByUsername($_POST['user']) === null){
+			$title = 'No user with requested username';
+			require_once __DIR__ . '/../view/user_search.php';
+			return;
+		}
+
 		$title = 'Rating changes of user ' . $_POST['user'];
 		$ratings = $cs->getSingleUserRatings($cs->getIdByUsername($_POST['user']));
 

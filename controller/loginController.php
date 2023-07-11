@@ -14,6 +14,7 @@ class LoginController
         if (!isset($user) || !isset($pass)) {
             $response = ['success' => false, 'error' => 'User and password cant be empty'];
             echo json_encode($response);
+            require_once __DIR__ . '/../view/login_index.php';
             exit;
         }
 
@@ -28,6 +29,7 @@ class LoginController
         else{
             $response = ['success' => false, 'error' => 'Invalid username or password.'];
             echo json_encode($response);
+            require_once __DIR__ . '/../view/login_index.php';
         }
     }
 }; 

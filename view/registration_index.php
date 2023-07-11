@@ -7,6 +7,7 @@
 </head>
 <body>
 
+<div class="login-container">
 <form method="post" action="index.php?rt=registration/register">
 	Registration:
 	<br><input type="text" name="user" /><br>
@@ -14,6 +15,7 @@
 
 	<button type="submit">Register</button><br>
 </form>
+</div>
 
 </body>
 </html>
