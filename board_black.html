@@ -112,7 +112,7 @@
         function castles(color){
             var slobodno = true;
 
-            if(color == 'w'){
+            if(color == 'b'){
                 if(kingw_moved == true || ploca[7][4][1] != 4) return false;
 
                 if(!is_king_safe(color,0,0,0,0)) return false;
@@ -374,6 +374,7 @@
         }
 
         function check_mate(color){
+            var kralj_nije_napadnut = false;
             function simline(smx,smy, x , y){
                 var from_x = x;
                 var from_y = y;
@@ -435,7 +436,7 @@
 
                 var x ,y;
 
-                if(na_potezu == 'b'){
+                if(na_potezu == 'w'){
                     pocetak = 6;
                     sm = -1;
                 }
@@ -497,7 +498,7 @@
                     if(i == 0 && j == 0){
                         if(is_king_safe(color,x,y,x,y)){
                             console.log("Kralj se može pomaknuti na", x , y);
-                            return false;
+                            kralj_nije_napadnut = true;
                         }
                     }
                     kings[color][0] = x + i;
@@ -544,7 +545,9 @@
                 }
             }
 
-            return true;
+            if(kralj_nije_napadnut == true) return 2;//draw
+
+            return 1;//mat kralj je napadnut i nemozemo nikako to sprijeciti
         }
 
         function waitForSignal() {
