@@ -24,7 +24,7 @@
         var graphHeight = canvas.height - 20;
 
         // Calculate dot positions and draw dots
-        var dotSize = 4; // Adjust the dot size as needed
+        var dotSize = 6; // Adjust the dot size as needed
         var dotSpacing = graphWidth / (data.length - 1);
         for (var i = 0; i < data.length; i++) {
             var x = i * dotSpacing + 10;
@@ -32,6 +32,17 @@
 
             ctx.fillStyle = 'blue';
             ctx.fillRect(x - dotSize / 2, y - dotSize / 2, dotSize, dotSize);
+        }
+
+        for (var i = 0; i < data.length; i++) {
+            var x = i * dotSpacing + 10;
+            var y = canvas.height - ((data[i] / Math.max(...data)) * graphHeight) - 10;
+
+            ctx.font = "10px Arial";
+
+            ctx.fillStyle = 'blue';
+
+            ctx.fillText(data[i], x - 10, y + 12);
         }
 
         // Draw connecting lines

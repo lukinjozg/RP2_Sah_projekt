@@ -6,6 +6,40 @@ require_once __DIR__ . '/rating.class.php';
 
 class ChessService
 {
+	function registrationAvailable($username)
+	{
+		try
+		{
+			$db = DB::getConnection();
+			$query = "SELECT COUNT(*) AS cnt FROM users WHERE username = :username";
+			$statement = $db->prepare($query);
+			$statement->execute(array('username' => $username));
+		}
+		catch( PDOException $e ) { exit( 'PDO error ' . $e->getMessage() ); }
+		$result = $statement->fetchAll();
+		
+		if ($result['cnt']) {
+			return false;
+		}
+
+		return true;
+	}
+
+	function register($username, $password)
+	{
+		$db = DB::getConnection();
+
+		// Ubaci neke korisnike u tablicu users.
+		// Uočimo da ne treba specificirati id koji se automatski poveća kod svakog ubacivanja.
+		try
+		{
+			$st = $db->prepare( 'INSERT INTO users(username, password, wins, losses, rating) VALUES (:username, :password, :wins, :losses, :rating)' );
+
+			$st->execute( array( 'username' => $username, 'password' => password_hash( $password, PASSWORD_DEFAULT ), 'wins' => 0, 'losses' => 0, 'rating' => 1500 ) );
+		}
+		catch( PDOException $e ) { exit( "PDO error (seed_table_users): " . $e->getMessage() ); }
+	}
+
 	function loginVerification($username, $password){
 		try
 		{

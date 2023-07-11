@@ -7,16 +7,12 @@
 </head>
 <body>
 
-<form method="post" action="index.php?rt=login/loginVerification">
-	Log in validation:
+<form method="post" action="index.php?rt=registration/register">
+	Registration:
 	<br><input type="text" name="user" /><br>
     <input type="password" name="pass" /><br>
 
-	<button type="submit">Log in</button><br>
-</form>
-
-<form method="post" action="index.php?rt=registration/index">
-	<button type="submit">register</button>
+	<button type="submit">Register</button><br>
 </form>
 
 </body>

@@ -34,7 +34,13 @@ class RatingsController
 		}
 
 		$title = 'Rating changes of user ' . $_POST['user'];
-		$ratingList = $cs->getSingleUserRatings($cs->getIdByUsername($_POST['user']));
+		$ratings = $cs->getSingleUserRatings($cs->getIdByUsername($_POST['user']));
+
+		$ratingList = [];
+
+		foreach($ratings as $rating){
+			$ratingList[] = $rating -> rating;
+		}
 
 		require_once __DIR__ . '/../view/rating_index.php';
 	}
