@@ -25,7 +25,10 @@
 
         // Calculate dot positions and draw dots
         var dotSize = 6; // Adjust the dot size as needed
-        var dotSpacing = graphWidth / (data.length - 1);
+        var dotSpacing = 0;
+        if(data.length > 1){
+            dotSpacing = graphWidth / (data.length - 1);
+        }
         for (var i = 0; i < data.length; i++) {
             var x = i * dotSpacing + 10;
             var y = canvas.height - ((data[i] / Math.max(...data)) * graphHeight) - 10;

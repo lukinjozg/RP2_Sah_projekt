@@ -1,5 +1,7 @@
 <?php 
 
+session_start();
+
 require_once __DIR__ . '/../model/chessservice.class.php';
 
 class LoginController
@@ -24,6 +26,8 @@ class LoginController
             echo json_encode($response);
             $title = 'Users ratings';
 		    $userList = $cs->getAllUsers();
+            $_SESSION['username'] = $user;
+            $currentUsername = $user;
             require_once __DIR__ . '/../view/users_index.php';
         }
         else{

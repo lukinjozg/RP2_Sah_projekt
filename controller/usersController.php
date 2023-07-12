@@ -1,5 +1,7 @@
 <?php 
 
+session_start();
+
 require_once __DIR__ . '/../model/chessservice.class.php';
 
 class UsersController
@@ -8,6 +10,7 @@ class UsersController
 	{
 		$cs = new ChessService();
 
+		$currentUsername = $_SESSION['username'];
 		$title = 'Users ratings';
 		$userList = $cs->getAllUsers();
 

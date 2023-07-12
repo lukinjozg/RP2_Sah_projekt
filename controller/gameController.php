@@ -1,12 +1,15 @@
 <?php 
 
+session_start();
+
 require_once __DIR__ . '/../model/chessservice.class.php';
 
 class GameController
 {
 	public function index() 
 	{
-		require_once __DIR__ . '/../view/board.php';
+        $currentUsername = $_SESSION['username'];
+		require_once __DIR__ . '/../view/joinaj.html';
 	}
 
     function sendJSONandExit( $message )
@@ -54,8 +57,6 @@ class GameController
     public function gameplay()
     {
         $cs = new ChessService();
-
-        session_start();
 
         $action = isset($_POST['action']) ? $_POST['action'] : '';
 

@@ -1,5 +1,7 @@
 <?php 
 
+session_start();
+
 require_once __DIR__ . '/../model/chessservice.class.php';
 
 class RatingsController
@@ -8,6 +10,7 @@ class RatingsController
 	{
 		$cs = new ChessService();
 
+		$currentUsername = $_SESSION['username'];
 		$title = 'users ratings';
 		$userList = $cs->getAllUserRatings();
 
@@ -17,6 +20,7 @@ class RatingsController
 
 	public function search() 
 	{
+		$currentUsername = $_SESSION['username'];
 		$title = 'Search for user by username';
 
 		require_once __DIR__ . '/../view/user_search.php';
@@ -33,6 +37,8 @@ class RatingsController
 			exit();
 		}
 
+		$currentUsername = $_SESSION['username'];
+
 		if($cs->getIdByUsername($_POST['user']) === null){
 			$title = 'No user with requested username';
 			require_once __DIR__ . '/../view/user_search.php';
@@ -47,6 +53,8 @@ class RatingsController
 		foreach($ratings as $rating){
 			$ratingList[] = $rating -> rating;
 		}
+
+		print_r($ratingList);
 
 		require_once __DIR__ . '/../view/rating_index.php';
 	}
