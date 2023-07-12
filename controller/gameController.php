@@ -1,6 +1,8 @@
 <?php 
 
 session_start();
+//session_unset();
+//session_destroy();
 
 require_once __DIR__ . '/../model/chessservice.class.php';
 
@@ -22,7 +24,7 @@ class GameController
     }
 
     function generatePairId() {
-        for ($i = 0; $i < 16; $i++) {
+        for ($i = 0; $i < 160; $i++) {
             $pairId = dechex($i);
             if (!isset($_SESSION['status'][$pairId])) {
                 return $pairId; // vrati par
@@ -63,7 +65,7 @@ class GameController
         if ($action == 'gameover') { // poziva se kad user pobjedi
             if (!isset($_POST['user'])) {
                 $response = ['success' => false, 'error' => 'User empty'];
-                sendJSONandExit($response);
+                $this->sendJSONandExit($response);
             }
             $user = $_POST['user'];
             
@@ -71,7 +73,7 @@ class GameController
             
             if (!isset($pairId)) { // user nije u igri
                 $response = ['success' => false, 'error' => 'User not in game'];
-                sendJSONandExit($response);
+                $this->sendJSONandExit($response);
             }
             unset($_SESSION['gameid'][$user]);
         
@@ -118,11 +120,11 @@ class GameController
             }
             else {
                 $response = ['success' => false, 'error' => 'Invalid game ending'];
-                sendJSONandExit($response);
+                $this->sendJSONandExit($response);
             }
 
             $response = ['success' => true];
-            sendJSONandExit($response);
+            $this->sendJSONandExit($response);
         }
         else if ($action === 'join') { // pokreni igru
             $user = $_POST['user'];
@@ -134,9 +136,9 @@ class GameController
                 else {
                     $response = ['success' => true, 'turn' => 'black', 'opponent' => $_SESSION['white'][$pairId]];
                 }
-                sendJSONandExit($response);
+                $this->sendJSONandExit($response);
             }
-            $pairId = findWaitingPair();
+            $pairId = $this->findWaitingPair();
             if ($pairId !== null) {
                 $_SESSION['white'][$pairId] = $user;
                 $_SESSION['status'][$pairId] = 'paired';
@@ -144,7 +146,7 @@ class GameController
                 $response = ['success' => true, 'turn' => 'white', 'opponent' => $_SESSION['last'][$pairId]];
             }
             else {
-                $pairId = generatePairId();
+                $pairId = $this->generatePairId();
                 if ($pairId !== NULL) {
                     $_SESSION['status'][$pairId] = 'waiting';
                     $_SESSION['gameid'][$user] = $pairId;
@@ -156,7 +158,7 @@ class GameController
                 }
             }
         
-            sendJSONandExit($response);
+            $this->sendJSONandExit($response);
         }
         
         else if ($action === 'reach') { // je li protivnik napravio potez
@@ -165,22 +167,22 @@ class GameController
             
             if (!isset($pairId)) {
                 $response = ['success' => false, 'error' => 'Drugi igrac je izasao iz igre'];
-                sendJSONandExit($response);
+                $this->sendJSONandExit($response);
             }
         
             $lastPlayer = $_SESSION['last'][$pairId];
             if (!isset($lastPlayer) || $lastPlayer == $user) {
                 $response = ['success' => false, 'error' => 'Potez nije napravljen'];
-                sendJSONandExit($response);
+                $this->sendJSONandExit($response);
             }
         
             $lastBoard = $_SESSION['board'][$pairId];
             if (empty($lastBoard)) { // drugi igrac je u meduvremenu izasao iz igre
                 $response = ['success' => false, 'error' => 'Drugi igrac je izasao iz igre'];
-                sendJSONandExit($response);
+                $this->sendJSONandExit($response);
             }
             $response = ['success' => true, 'board' => $lastBoard];
-            sendJSONandExit($response);
+            $this->sendJSONandExit($response);
         }
         
         else if ($action === 'send') { // napravi potez
@@ -189,28 +191,36 @@ class GameController
         
             if (empty($user) || empty($board)) {
                 $response = ['success' => false, 'error' => 'User and board cannot be empty'];
-                sendJSONandExit($response);
+                $this->sendJSONandExit($response);
             }
         
             $pairId = $_SESSION['gameid'][$user];
         
             if (!isset($pairId)) {
                 $response = ['success' => false, 'error' => 'Drugi igrac je izasao iz igre'];
-                sendJSONandExit($response);
+                $this->sendJSONandExit($response);
             }
         
             $_SESSION['board'][$pairId] = $board;
             $_SESSION['last'][$pairId] = $user;
         
             $response = ['success' => true];
-            sendJSONandExit($response);
+            $this->sendJSONandExit($response);
         }
         
         else { // netocna naredba
             $response = ['success' => false, 'error' => 'Invalid action'];
-            sendJSONandExit($response);
+            $this->sendJSONandExit($response);
         }
     }
-}; 
+};
+
+$controller = new GameController();
+
+// Check if the request is made through AJAX
+if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+    // Call the gameplay function directly
+    $controller->gameplay();
+}
 
 ?>

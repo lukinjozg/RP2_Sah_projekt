@@ -12,7 +12,6 @@
 
     <p class="username-box"> Waiting... </p>
     <p id="luzer"></p>
-    <div id = 'promocija'></div>
     
     <script>
         //K - kralj
@@ -24,42 +23,11 @@
         //w,b - u indeksu koje je boje
 
         var gotovo = 0;
-        var promocija = 0;
 
         var kings = {
             b: [0,4],
             w: [7,4]
         }
-
-        /*var en_passw = [0,0,0,0,0,0,0,0];
-        var en_passb = [0,0,0,0,0,0,0,0];
-
-        function provjeri_passant(color){
-            for(var i = 0; i <  8; i ++){
-                
-                if(ploca[1][i][0] == '.'){
-                    if(ploca[3][i][0][0] == 'P' && ploca[3][i][0][1] == color && en_passb[i] == 0){
-                        on_passant = [3,i];
-                        en_passb[i] = 1;
-
-                        console.log("ispunio se if",on_passant[0],on_passant[1]);
-                        break;
-                    }
-                    
-                    console.log("Tocka je al nije 2");
-                    en_passb[i] = 1;
-                }
-
-                else if(ploca[1][i][0][0] != 'P' || ploca[1][i][0][1] != color ){
-                    en_passb[i] = 1;
-                    console.log("Tocka je al nije 2");
-                }
-
-                console.log("on passant B;",en_passb[i]);
-            }
-
-            console.log("on passant;",on_passant[0], on_passant[1]);
-        }*/
 
         var ploca = [[['Rb',5],['Nb',2],['Bb',2],['Qb',3],['Kb',4],['Bb',2],['Nb',2],['Rb',5]],
                  [['Pb',1],['Pb',1],['Pb',1],['Pb',1],['Pb',1],['Pb',1],['Pb',1],['Pb',1]],
@@ -69,16 +37,6 @@
                  [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
                  [['Pw',1],['Pw',1],['Pw',1],['Pw',1],['Pw',1],['Pw',1],['Pw',1],['Pw',1]],
                  [['Rw',5],['Nw',2],['Bw',2],['Qw',3],['Kw',4],['Bw',2],['Nw',2],['Rw',5]]];
-
-        //za testirati
-        /*var ploca = [[['.',0],['.',0],['.',0],['.',0],['Kb',4],['.',0],['.',0],['.',0]],
-                [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
-                 [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
-                 [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
-                 [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
-                 [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
-                 [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
-                 [['Rw',5],['Nw',2],['Bw',2],['Qw',3],['Kw',4],['Qw',2],['Nw',2],['Rw',5]]];*/
 
         var na_potezu = 'w';
 
@@ -101,128 +59,6 @@
             B: 2,
             P: 1
         }
-
-        function napravi_promociju(x,y, color){
-            promocija = 1;
-            $("#promocija").text("Izaberi figuru za promociju: ");
-
-            promotion('Q', color,x,y);
-
-            promotion('N', color,x,y);
-
-            promotion('R', color,x,y);
-
-            promotion('B', color,x,y);
-        }
-
-        function promotion(figura, color,x,y){
-            var fig = '';
-            fig = figura + color;
-
-            var button = $("<button>" + fig + "</button>");
-  
-            button.click(function() {
-                ploca[x][y] = [fig, hp_stats[figura]];
-
-                promocija = 0;
-
-                cisti_plocu();
-
-                $("#promocija").empty();
-            });
-
-            $("#promocija").append(button);
-        }
-
-        //castles
-        castlesw = 0;
-        castlesb = 0;
-
-        kingw_moved = false;
-        kingb_moved = false;
-
-        rb1_moved = false; // levi
-        rb2_moved = false; // desni
-
-        rw1_moved = false; // levi
-        rw2_moved = false; // desni
-
-        //kralja ništa nemože ubiti iz prve pa nemoramo sve gledati
-        function castles(color){
-            var slobodno = true;
-
-            if(color == 'w'){
-                if(kingw_moved == true || ploca[7][4][1] != 4) return false;
-
-                if(!is_king_safe(color,0,0,0,0)) return false;
-
-                console.log("kralj je na mjestu siguran");
-
-                if(rw1_moved == false && ploca[7][0][1] == 5){
-                    for(var i = 0; i < 3; i ++){
-                        if(ploca[7][1 + i][0] != '.'){
-                            console.log("polje spriječava rošadu:",7, i + 1);
-                            slobodno = false;
-                            break
-                        }
-                    }
-                    
-                    if(slobodno){
-                        make_circle(7,0);
-                    }
-                }
-
-                if(rw2_moved == false && ploca[7][7][1] == 5){
-                    slobodno = true;
-
-                    console.log("kula D je zdrava");
-
-                    for(var i = 0; i < 2; i ++){
-                        if(ploca[7][6 - i][0] != '.'){
-                            console.log("polje spriječava rošadu:",7, 6 - i);
-                            slobodno = false;
-                            break
-                        }
-                    }
-
-
-                    if(slobodno){
-                        make_circle(7,7);
-                    }
-                }
-            }
-            return true;
-        }
-
-        function cisti_plocu(){
-            for (var i = 0; i < 8; i++) {
-                for (var j = 0; j < 8; j++) {
-                    id_button = "#" + i.toString() + j.toString();
-
-                    if(ploca[i][j][0] != '.'){
-                        var newSegment = $( napravi_hp_bar(ploca[i][j][1], hp_stats[ploca[i][j][0][0]] - ploca[i][j][1]));
-                        $(id_button).empty();
-                        $('<img>').attr('src', ploca[i][j][0] + '.png').appendTo(id_button);
-                                
-                        $(id_button).append(newSegment);
-                    }
-
-                    else{
-                        $(id_button).empty();
-                    }
-
-                    $(id_button).removeClass();
-
-                    if((i+j)%2 == 0){
-                        $(id_button).addClass('white');
-                    }
-
-                    else{
-                        $(id_button).addClass('black');
-                    }
-                }
-            }
-        }
         
         function in_board(x, y){
             if( x >= 0 && x < 8 && y >= 0 && y < 8){
@@ -243,20 +79,6 @@
             na_potezu = 'w';
         }
 
-        function make_circle(x,y){
-            var id_button = "#" + x.toString() + y.toString();
-
-            $(id_button).removeClass();
-
-            if((x+y)%2 == 0){
-                $(id_button).addClass('white1');
-            }
-
-            else{
-                $(id_button).addClass('black1');
-            }
-        }
-
         function napravi_hp_bar(ostalo_hp, izgubljeno_hp){
             var str_hp = '<div class="health-bar">';
 
@@ -271,27 +93,6 @@
             str_hp += '</div>';
 
             return str_hp;
-        }
-
-        function line(smx,smy, x , y){
-            var from_x = x;
-            var from_y = y;
-
-            while(true){
-                x += smx;
-                y += smy;
-
-                if(!in_board(x,y)) break;
-
-                if(ploca[x][y][0] != '.'){
-                    if(ploca[x][y][0][1] == na_potezu) break;
-
-                    if(is_king_safe(na_potezu,from_x,from_y, x,y)) make_circle(x,y);
-                    break;
-                }
-
-                if(is_king_safe(na_potezu,from_x,from_y, x,y)) make_circle(x,y);
-            }
         }
 
         function test_line(smx,smy, str /* B ili R */, color){
@@ -399,7 +200,6 @@
         }
 
         function check_mate(color){
-            var kralj_nije_napadnut = false;
             function simline(smx,smy, x , y){
                 var from_x = x;
                 var from_y = y;
@@ -523,7 +323,7 @@
                     if(i == 0 && j == 0){
                         if(is_king_safe(color,x,y,x,y)){
                             console.log("Kralj se može pomaknuti na", x , y);
-                            kralj_nije_napadnut = true;
+                            return false;
                         }
                     }
                     kings[color][0] = x + i;
@@ -570,9 +370,7 @@
                 }
             }
 
-            if(kralj_nije_napadnut == true) return 2;//draw
-
-            return 1;//mat kralj je napadnut i nemozemo nikako to sprijeciti
+            return true;
         }
 
         $(document).ready(function() {
@@ -620,6 +418,41 @@
 
                         id_button = "#" + row.toString() + col.toString();
 
+                        function make_circle(x,y){
+                            id_button = "#" + x.toString() + y.toString();
+
+                            $(id_button).removeClass();
+
+                            if((x+y)%2 == 0){
+                                $(id_button).addClass('white1');
+                            }
+
+                            else{
+                                $(id_button).addClass('black1');
+                            }
+                        }
+
+                        function line(smx,smy, x , y){
+                                var from_x = x;
+                                var from_y = y;
+
+                                while(true){
+                                    x += smx;
+                                    y += smy;
+
+                                    if(!in_board(x,y)) break;
+
+                                    if(ploca[x][y][0] != '.'){
+                                        if(ploca[x][y][0][1] == na_potezu) break;
+
+                                        if(is_king_safe(na_potezu,from_x,from_y, x,y)) make_circle(x,y);
+                                        break;
+                                    }
+
+                                    if(is_king_safe(na_potezu,from_x,from_y, x,y)) make_circle(x,y);
+                                }
+                            }
+                        
                         var kliknuo = 0;
                         if($(id_button).attr('class').length > 5){
                             kliknuo = 1;
@@ -642,50 +475,6 @@
                                 if(Math.abs(row - current_piece[0]) > 1){
                                     on_passant = [row,col];
                                 }
-
-                                else if(na_potezu == 'b' && row == 7){
-                                    napravi_promociju(row,col, na_potezu);
-                                }
-
-                                else if(na_potezu == 'w' && row == 0){
-                                    napravi_promociju(row,col, na_potezu);
-                                }
-                            }
-                            
-                            if(ploca[current_piece[0]][current_piece[1]][0][0] == 'K'){
-                                if(ploca[current_piece[0]][current_piece[1]][0][1] == 'b'){
-                                    kingb_moved = true;
-                                }
-
-                                else{
-                                    kingw_moved = true;
-                                }
-                            }
-
-                            if(ploca[current_piece[0]][current_piece[1]][0][0] == 'R'){
-                                if(ploca[current_piece[0]][current_piece[1]][0][1] == 'w'){
-                                    if(current_piece[1] == 0) rw1_moved = true;
-                                    else rw2_moved = true;
-                                }
-                            }
-
-                            if(ploca[row][col][0] == 'Rw' && na_potezu == 'w'){
-                                if(col == 0){
-                                    ploca[row][2] = ['Kw',4];
-                                    ploca[row][3] = ['Rw',5];
-                                    kings[na_potezu][1] = 2;
-                                    rw1_moved = true;
-                                    kingw_moved = true;
-                                }
-
-                                else{
-                                    ploca[row][5] = ['Kw',4];
-                                    ploca[row][4] = ['Rw',5];
-
-                                    kings[na_potezu][1] = 5;
-                                    rw2_moved = true;
-                                    kingw_moved = true;
-                                }
                             }
 
                             id_button = "#" + row.toString() + col.toString();
@@ -699,8 +488,17 @@
                                 }
 
                                 ploca[row][col] = ploca[current_piece[0]][current_piece[1]];
+
+                                var newSegment = $( napravi_hp_bar(ploca[current_piece[0]][current_piece[1]][1], hp_stats[ploca[current_piece[0]][current_piece[1]][0][0]] - ploca[current_piece[0]][current_piece[1]][1]));
+                                $(id_button).empty();
+                                $('<img>').attr('src', ploca[current_piece[0]][current_piece[1]][0] + '.png').appendTo(id_button);
+                                
+                                $(id_button).append(newSegment);
+                            
                                 ploca[current_piece[0]][current_piece[1]] = ['.',0];
-            
+                            
+                                id_button = "#" + current_piece[0].toString()  + current_piece[1].toString();
+                                $(id_button).empty();
 
                                 current_piece[0] = row;
                                 current_piece[1] = col;
@@ -710,31 +508,41 @@
                                 ploca[row][col][1] -= attack_stats[ploca[current_piece[0]][current_piece[1]][0][0]];
                                 
                                 console.log("hp je sada", ploca[row][col][1]);
+                                
+                                var newSegment = $( napravi_hp_bar(ploca[row][col][1], hp_stats[ploca[row][col][0][0]] - ploca[row][col][1]));
+                                $(id_button).append(newSegment);
                             }
                                 
                             promjeni_tko_je_na_potezu();
 
                             //ako je matiran
-                            if(check_mate(na_potezu) == 1){
+                            if(check_mate(na_potezu)){
                                 console.log("Izgubio je igru", na_potezu);
 
                                 $("#luzer").text("Izgubio je igru " + na_potezu);
 
                                 gotovo = 1;
                             }
+                        }
 
-                            if(check_mate(na_potezu) == 2){
-                                console.log("Izgubio je igru", na_potezu);
+                        //citimo plocu
+                        for (var i = 0; i < boardSize; i++) {
+                            for (var j = 0; j < boardSize; j++) {
+                                id_button = "#" + i.toString() + j.toString();
 
-                                $("#luzer").text("Igra je remi");
+                                $(id_button).removeClass();
 
-                                gotovo = 1;
+                                if((i+j)%2 == 0){
+                                    $(id_button).addClass('white');
+                                }
+
+                                else{
+                                    $(id_button).addClass('black');
+                                }
                             }
                         }
 
-                        cisti_plocu();
-
-                        if(promocija || gotovo || kliknuo || ploca[row][col][0] == '.' || ploca[row][col][0][1] != na_potezu){
+                        if(gotovo || kliknuo || ploca[row][col][0] == '.' || ploca[row][col][0][1] != na_potezu){
                             console.log("Tocka");
 
                             current_piece[0] = -1;
@@ -748,8 +556,6 @@
 
                         //Pijun
                         else if(ploca[row][col][0][0] == 'P'){
-                            //if(na_potezu == 'w') provjeri_passant('b');
-
                             console.log("Pawn");
 
                             current_piece[0] = row;
@@ -956,10 +762,8 @@
                                         if(is_king_safe(na_potezu,row,col,row,col)) make_circle(x,y);
                                         else console.log("kralj nije siguran na",kings[na_potezu][0],kings[na_potezu][1],"xy su3",x,y);
                                     }
-                                }  
+                                }
                             }
-
-                            castles(na_potezu);
                         }
   
                         console.log("Clicked on cell (" + row + ", " + col + ")");

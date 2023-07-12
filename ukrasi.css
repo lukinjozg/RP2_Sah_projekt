@@ -1,12 +1,12 @@
 .chessboard {
     display: flex;
     flex-wrap: wrap;
-    width: 560px;
+    width: 480px;
 }
 
 .chessboard button {
-    width: 70px;
-    height: 70px;
+    width: 60px;
+    height: 60px;
     position: relative;
     border: none;
     text-align: center;
@@ -15,29 +15,6 @@
     border: none;
     outline: none;
 }
-
-#promocija button {
-    background-color: #4ca5af; /* Green */
-    border: none;
-    color: white;
-    margin: 5px;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    cursor: pointer;
-  }
-
-.chessboard img {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    max-height: 90%;
-    width: auto;
-    height: auto;
-  }
 
 .white {
     background-color: #ade1f5;

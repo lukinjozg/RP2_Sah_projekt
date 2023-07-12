@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Chessboard</title>
-    <link rel="stylesheet" type="text/css" href="ukrasi.css">
+    <link rel="stylesheet" type="text/css" href="../css/ukrasi.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
@@ -23,9 +23,11 @@
         //w,b - u indeksu koje je boje
 
         var urlParams = new URLSearchParams(window.location.search);
-        var username = urlParams.get('username');
+        var username = urlParams.get('param1');
+        var username2 = urlParams.get('param2');
 
         var gotovo = 0;
+        var promocija = 0;
 
         var kings = {
             w: [0,3],
@@ -76,6 +78,17 @@
             promotion('B', color,x,y);
         }
 
+        function getKings(){
+            for(var i = 0; i < 8; i ++){
+                for(var j = 0; j < 8; j ++){
+                    if(ploca[i][j][0][0] == 'K'){
+                        kings[ploca[i][j][0][1]][0] = i;
+                        kings[ploca[i][j][0][1]][1] = j; 
+                    }
+                }
+            }
+        }
+
         function promotion(figura, color,x,y){
             var fig = '';
             fig = figura + color;
@@ -90,37 +103,77 @@
                 cisti_plocu();
 
                 $("#promocija").empty();
+
+                if(!gotovo){
+                    SendBoard();
+
+                    setTimeout(function() {}, 100);
+                }
+                //ako je matiran
+                if(check_mate(na_potezu) == 1){
+                    console.log("Izgubio je igru", na_potezu);
+
+                    $("#luzer").text("Izgubio je igru " + na_potezu);
+
+                    matiranSend('win', na_potezu);
+
+                    gotovo = 1;
+                }
+
+                else if(check_mate(na_potezu) == 2){
+                    console.log("Izgubio je igru", na_potezu);
+
+                    $("#luzer").text("remi je");
+
+                    matiranSend('draw', na_potezu);
+
+                    gotovo = 1;
+                }
+
+                if(!gotovo){
+                    AcceptBoard();
+                }
             });
 
             $("#promocija").append(button);
         }
 
-        //castles
-        castlesw = 0;
-        castlesb = 0;
+        function matiranSend(parametar, color){
+            $.ajax({
+                url: '../controller/gameController.php', 
+                type: 'POST',
+                data:{
+                    action: 'gameover',
+                    ending: parametar,
+                    user: username
+                },
+                dataType: 'json',
+                success: function() {
+                    console.log(color, parametar);
+                },
+                error: function() {}
+            });
+        }
 
-        kingw_moved = false;
+        //castles
         kingb_moved = false;
 
         rb1_moved = false; // levi
         rb2_moved = false; // desni
-
-        rw1_moved = false; // levi
-        rw2_moved = false; // desni
 
         //kralja ništa nemože ubiti iz prve pa nemoramo sve gledati
         function castles(color){
             var slobodno = true;
 
             if(color == 'b'){
-                if(kingw_moved == true || ploca[7][4][1] != 4) return false;
+                if(kingb_moved == true || ploca[7][3][1] != 4) return false;
 
                 if(!is_king_safe(color,0,0,0,0)) return false;
 
                 console.log("kralj je na mjestu siguran");
 
-                if(rw1_moved == false && ploca[7][0][1] == 5){
-                    for(var i = 0; i < 3; i ++){
+                if(rb1_moved == false && ploca[7][0][1] == 5){
+                    for(var i = 0; i < 2; i ++){
                         if(ploca[7][1 + i][0] != '.'){
                             console.log("polje spriječava rošadu:",7, i + 1);
                             slobodno = false;
@@ -133,19 +186,18 @@
                     }
                 }
 
-                if(rw2_moved == false && ploca[7][7][1] == 5){
+                if(rb2_moved == false && ploca[7][7][1] == 5){
                     slobodno = true;
 
                     console.log("kula D je zdrava");
 
-                    for(var i = 0; i < 2; i ++){
+                    for(var i = 0; i < 3; i ++){
                         if(ploca[7][6 - i][0] != '.'){
                             console.log("polje spriječava rošadu:",7, 6 - i);
                             slobodno = false;
                             break
                         }
                     }
-
 
                     if(slobodno){
                         make_circle(7,7);
@@ -204,6 +256,41 @@
             }
         }
 
+        function make_circle(x,y){
+            id_button = "#" + x.toString() + y.toString();
+
+            $(id_button).removeClass();
+
+            if((x+y)%2 == 0){
+                $(id_button).addClass('white1');
+            }
+
+            else{
+                $(id_button).addClass('black1');
+            }
+        }
+
+        function line(smx,smy, x , y){
+            var from_x = x;
+            var from_y = y;
+
+            while(true){
+                x += smx;
+                y += smy;
+
+                if(!in_board(x,y)) break;
+
+                if(ploca[x][y][0] != '.'){
+                    if(ploca[x][y][0][1] == na_potezu) break;
+
+                    if(is_king_safe(na_potezu,from_x,from_y, x,y)) make_circle(x,y);
+                    break;
+                }
+
+                if(is_king_safe(na_potezu,from_x,from_y, x,y)) make_circle(x,y);
+            }
+        }
+
         function cisti_plocu(){
             for (var i = 0; i < 8; i++) {
                 for (var j = 0; j < 8; j++) {
@@ -212,7 +299,7 @@
                     if(ploca[i][j][0] != '.'){
                         var newSegment = $( napravi_hp_bar(ploca[i][j][1], hp_stats[ploca[i][j][0][0]] - ploca[i][j][1]));
                         $(id_button).empty();
-                        $('<img>').attr('src', ploca[i][j][0] + '.png').appendTo(id_button);
+                        $('<img>').attr('src', '../' +ploca[i][j][0] + '.png').appendTo(id_button);
                                 
                         $(id_button).append(newSegment);
                     }
@@ -334,6 +421,7 @@
                     }
                 }
             }
+            na_potezu
 
             //kralj
             for(var i = -1; i < 2; i ++){
@@ -374,6 +462,7 @@
         }
 
         function check_mate(color){
+            getKings();
             var kralj_nije_napadnut = false;
             function simline(smx,smy, x , y){
                 var from_x = x;
@@ -386,14 +475,14 @@
                     if(!in_board(x,y)) break;
 
                     if(ploca[x][y][0] != '.'){
-                        if(ploca[x][y][0][1] == na_potezu) break;
+                        if(ploca[x][y][0][1] == color) break;
 
-                        if(is_king_safe(na_potezu,from_x,from_y, x,y)) return true;
+                        if(is_king_safe(color,from_x,from_y, x,y)) return true;
                         
                         break;
                     }
 
-                    if(is_king_safe(na_potezu,from_x,from_y, x,y)) return true;
+                    if(is_king_safe(color,from_x,from_y, x,y)) return true;
                 }
 
                 return false;
@@ -420,11 +509,11 @@
                 for(var i = 0; i < 8; i ++){
                     x = xrow + movesx[i], y = ycol + movesy[i];
 
-                    if(!in_board(x,y) || !is_king_safe(na_potezu,xrow,ycol,x,y)) continue;
+                    if(!in_board(x,y) || !is_king_safe(color,xrow,ycol,x,y)) continue;
 
                     if(ploca[x][y][0] == '.') return true;
 
-                    else if(ploca[x][y][0] != '.' && ploca[x][y][0][1] != na_potezu) return true;
+                    else if(ploca[x][y][0] != '.' && ploca[x][y][0][1] != color) return true;
                 }
 
                 return false;
@@ -436,7 +525,7 @@
 
                 var x ,y;
 
-                if(na_potezu == 'w'){
+                if(color == 'w'){
                     pocetak = 6;
                     sm = -1;
                 }
@@ -446,12 +535,12 @@
                     x = xrow + sm;
                     y = ycol;
 
-                    if(is_king_safe(na_potezu,xrow,ycol,x,y)) return true;
+                    if(is_king_safe(color,xrow,ycol,x,y)) return true;
 
                     if(ploca[xrow + sm + sm][ycol][0] == '.'){
                         x += sm;
 
-                        if(is_king_safe(na_potezu,xrow,ycol,x,y)) return true;
+                        if(is_king_safe(color,xrow,ycol,x,y)) return true;
                     }
                 }
 
@@ -460,22 +549,22 @@
                     x = xrow + sm;
                     y = ycol;
 
-                    if(is_king_safe(na_potezu,xrow,ycol,x,y)) return true;
+                    if(is_king_safe(color,xrow,ycol,x,y)) return true;
                 }
 
                             //ako ima neš za napasti
-                if(in_board(xrow + sm, ycol - 1) && ploca[xrow + sm][ycol - 1][0] != '.' && ploca[xrow + sm][ycol - 1][0][1] != na_potezu){
+                if(in_board(xrow + sm, ycol - 1) && ploca[xrow + sm][ycol - 1][0] != '.' && ploca[xrow + sm][ycol - 1][0][1] != color){
                     x = xrow + sm;
                     y = ycol - 1;
 
-                    if(is_king_safe(na_potezu,xrow,ycol,x,y)) return true;
+                    if(is_king_safe(color,xrow,ycol,x,y)) return true;
                 }
 
-                if(in_board(xrow + sm, ycol + 1) && ploca[xrow + sm][ycol + 1][0] != '.' && ploca[xrow + sm][ycol + 1][0][1] != na_potezu){
+                if(in_board(xrow + sm, ycol + 1) && ploca[xrow + sm][ycol + 1][0] != '.' && ploca[xrow + sm][ycol + 1][0][1] != color){
                     x = xrow + sm;
                     y = ycol + 1;
 
-                    if(is_king_safe(na_potezu,xrow,ycol,x,y)) return true;
+                    if(is_king_safe(color,xrow,ycol,x,y)) return true;
                 }
 
                 if(on_passant[0] != -1){
@@ -483,7 +572,7 @@
                     y = ycol;
 
                     if( x == on_passant[0] && (y - 1 == on_passant[1] || y + 1 == on_passant[1])){
-                        if(is_king_safe(na_potezu,xrow,ycol,x + sm,on_passant[1])) return true;
+                        if(is_king_safe(color,xrow,ycol,x + sm,on_passant[1])) return true;
                     }
                 }
 
@@ -518,7 +607,7 @@
 
             for(var i = 0; i < 8; i ++){
                 for(var j = 0; j < 8; j ++){
-                    if(ploca[i][j][0] != '.' && ploca[i][j][0][1] == na_potezu){
+                    if(ploca[i][j][0] != '.' && ploca[i][j][0][1] == color){
                         if(ploca[i][j][0][0] == 'R' && simR(i,j)){
                             console.log(i,j);
                             return false;
@@ -579,7 +668,7 @@
             okreni_plocu();
 
             $.ajax({
-                url: 'server.php',
+                url: '../controller/gameController.php',
                 method: 'POST',
                 data:{
                     action: 'send',
@@ -587,7 +676,11 @@
                     user: username 
                 },
                 dataType: 'json',
-                success: function() {
+                success: function(data) {
+                    if(data.success == false){
+                        gotovo = 1; //drugi igrač je završio igru
+                        $('#luzer').text('Drugi igrač je već izašao iz igre');
+                    }
                 },
                 error: function() {
                     console.error('Error');
@@ -600,7 +693,7 @@
 
         function AcceptBoard() {
             $.ajax({
-                url: 'server.php',
+                url: '../controller/gameController.php',
                 method: 'POST',
                 data:{
                     action: 'reach',
@@ -608,9 +701,18 @@
                 },
                 dataType: 'json',
                 success: function(data) {
+                    console.log("NESTO SE TU ISPUNILO");
                     if(data.success == false){
-                        AcceptBoard();
-                        console.log('crni trazi potez');
+                        console.log(data.error);
+                        if(data.error[0] == 'D'){
+                            gotovo = 1; //drugi igrač je završio igru
+                            $('#luzer').text('Drugi igrač je već izašao iz igre');
+                        }
+
+                        else{
+                            AcceptBoard();
+                            console.log('crni trazi potez');
+                        } 
                     }
 
                     else{
@@ -626,30 +728,55 @@
                             //možda za en passant
                             }
                         }
-                    
+                        
+                        promjeni_tko_je_na_potezu();
+                        console.log("provejrava se jel", na_potezu, "matiran??");
+                        if(check_mate('b') == 1){
+                            console.log("Izgubio je igru", 'b');
+
+                            $("#luzer").text("Izgubio je igru " + na_potezu);
+
+                            matiranSend('lose', na_potezu);
+                            //šalji to negdje
+                            gotovo = 1;
+                        }
+
+                        else if(check_mate('b') == 2){
+                            console.log("Igra je remi");
+
+                            $("#luzer").text("remi je");
+
+                            matiranSend('draw', na_potezu);
+                            //šalji to negdje
+                            gotovo = 1;
+                        }
+
+                        promjeni_tko_je_na_potezu();
+
                         okreni_plocu();
+                        getKings();
 
-                            for(var i = 0; i < 8; i ++){
-                                console.log(ploca[i][0][0],ploca[i][1][0],ploca[i][2][0],ploca[i][3][0],ploca[i][4][0],ploca[i][5][0],ploca[i][6][0],ploca[i][7][0]);
-                            }
+                        for(var i = 0; i < 8; i ++){
+                            console.log(ploca[i][0][0],ploca[i][1][0],ploca[i][2][0],ploca[i][3][0],ploca[i][4][0],ploca[i][5][0],ploca[i][6][0],ploca[i][7][0]);
+                        }
 
-                            for(var i = 0; i < 8; i ++){
-                                console.log(ploca[i][0][1],ploca[i][1][1],ploca[i][2][1],ploca[i][3][1],ploca[i][4][1],ploca[i][5][1],ploca[i][6][1],ploca[i][7][1]);
-                            }
+                        for(var i = 0; i < 8; i ++){
+                            console.log(ploca[i][0][1],ploca[i][1][1],ploca[i][2][1],ploca[i][3][1],ploca[i][4][1],ploca[i][5][1],ploca[i][6][1],ploca[i][7][1]);
+                        }
 
                         promjeni_tko_je_na_potezu();
                         cisti_plocu();
                     }
                 },
                 error: function() {
-                    AcceptBoard();
-                    console.error("ništa se nije poslalo");
+                    setTimeout(AcceptBoard, 2000);
                 }
             });
         }
 
         function dodaj_username(){
             $('#pb').text(username);
+            $('#pw').text(username2);
         }
 
         $(document).ready(function() {
@@ -667,7 +794,7 @@
                     
                     if(ploca[i][j][0] != '.'){
                         var cell = $("<button>"+ napravi_hp_bar(ploca[i][j][1] , 0) + "</button>");
-                        $('<img>').attr('src', ploca[i][j][0] + '.png').appendTo(cell);
+                        $('<img>').attr('src', '../' +  ploca[i][j][0] + '.png').appendTo(cell);
                     }
 
                     else{
@@ -699,51 +826,15 @@
                         var id_button;
 
                         id_button = "#" + row.toString() + col.toString();
-
-                        function make_circle(x,y){
-                            id_button = "#" + x.toString() + y.toString();
-
-                            $(id_button).removeClass();
-
-                            if((x+y)%2 == 0){
-                                $(id_button).addClass('white1');
-                            }
-
-                            else{
-                                $(id_button).addClass('black1');
-                            }
-                        }
-
-                        function line(smx,smy, x , y){
-                                var from_x = x;
-                                var from_y = y;
-
-                                while(true){
-                                    x += smx;
-                                    y += smy;
-
-                                    if(!in_board(x,y)) break;
-
-                                    if(ploca[x][y][0] != '.'){
-                                        if(ploca[x][y][0][1] == na_potezu) break;
-
-                                        if(is_king_safe(na_potezu,from_x,from_y, x,y)) make_circle(x,y);
-                                        break;
-                                    }
-
-                                    if(is_king_safe(na_potezu,from_x,from_y, x,y)) make_circle(x,y);
-                                }
-                            }
                         
                         var kliknuo = 0;
                         if($(id_button).attr('class').length > 5){
                             kliknuo = 1;
+                            id_button = "#" + row.toString() + col.toString();
                             //za on passant provjera
                             if(on_passant[0] != -1){
                                 //dogodio se on passant
-                                var pomocna_koordinata;
-                                if(na_potezu == 'w') pomocna_koordinata = -1;
-                                else pomocna_koordinata = 1;
+                                var pomocna_koordinata = -1;
 
                                 if(ploca[current_piece[0]][current_piece[1]][0][0] == 'P' &&  row == (on_passant[0] + pomocna_koordinata) && col == on_passant[1] ){
                                     id_button = "#" + on_passant[0].toString()  + on_passant[1].toString();
@@ -753,9 +844,45 @@
                                 on_passant = [-1,-1];
                             }
 
-                            id_button = "#" + row.toString() + col.toString();
-                            
-                            if(ploca[row][col][0] == '.' || ploca[row][col][1] <= attack_stats[ploca[current_piece[0]][current_piece[1]][0][0]]){
+                            if(ploca[current_piece[0]][current_piece[1]][0][0] == 'P'){
+                                if(na_potezu == 'b' && row == 0){
+                                    napravi_promociju(row,col, na_potezu);
+                                }
+                            }
+
+                            if(ploca[current_piece[0]][current_piece[1]][0][0] == 'K'){
+                                kingb_moved = true;
+                            }
+
+                            if(ploca[current_piece[0]][current_piece[1]][0][0] == 'R'){
+                                if(ploca[current_piece[0]][current_piece[1]][0][1] == 'b'){
+                                    if(current_piece[1] == 0) rb1_moved = true;
+                                    else rb2_moved = true;
+                                }
+                            }
+
+                            if(ploca[row][col][0] == 'Rb' && na_potezu == 'b'){
+                                ploca[row][col] = ['.',0];
+                                ploca[7][3] = ['.',0];
+                                if(col == 0){
+                                    ploca[row][1] = ['Kb',4];
+                                    ploca[row][2] = ['Rb',5];
+                                    kings[na_potezu][1] = 2;
+                                    rb1_moved = true;
+                                    kingb_moved = true;
+                                }
+
+                                else{
+                                    ploca[row][5] = ['Kb',4];
+                                    ploca[row][4] = ['Rb',5];
+
+                                    kings[na_potezu][1] = 5;
+                                    rb2_moved = true;
+                                    kingb_moved = true;
+                                }
+                            }
+
+                            else if(ploca[row][col][0] == '.' || ploca[row][col][1] <= attack_stats[ploca[current_piece[0]][current_piece[1]][0][0]]){
                                 if(ploca[current_piece[0]][current_piece[1]][0][0] == 'K'){
                                     kings[na_potezu][0] = row;
                                     kings[na_potezu][1] = col;
@@ -767,7 +894,7 @@
 
                                 var newSegment = $( napravi_hp_bar(ploca[current_piece[0]][current_piece[1]][1], hp_stats[ploca[current_piece[0]][current_piece[1]][0][0]] - ploca[current_piece[0]][current_piece[1]][1]));
                                 $(id_button).empty();
-                                $('<img>').attr('src', ploca[current_piece[0]][current_piece[1]][0] + '.png').appendTo(id_button);
+                                $('<img>').attr('src', '../' + ploca[current_piece[0]][current_piece[1]][0] + '.png').appendTo(id_button);
                                 
                                 $(id_button).append(newSegment);
                             
@@ -791,17 +918,39 @@
                             
                             promjeni_tko_je_na_potezu();
 
-                            //ako je matiran
-                            if(check_mate(na_potezu)){
-                                console.log("Izgubio je igru", na_potezu);
+                            if(promocija != 1){
+                                console.log("cekam promociju");
 
-                                $("#luzer").text("Izgubio je igru " + na_potezu);
+                                if(!gotovo){
+                                    SendBoard();
 
-                                gotovo = 1;
+                                    setTimeout(function() {}, 100);
+                                }
+                                //ako je matiran
+                                if(check_mate(na_potezu) == 1){
+                                    console.log("Izgubio je igru", na_potezu);
+
+                                    $("#luzer").text("Izgubio je igru " + na_potezu);
+
+                                    matiranSend('win', na_potezu);
+
+                                    gotovo = 1;
+                                }
+
+                                else if(check_mate(na_potezu) == 2){
+                                    console.log("Izgubio je igru", na_potezu);
+
+                                    $("#luzer").text("remi je");
+
+                                    matiranSend('draw', na_potezu);
+
+                                    gotovo = 1;
+                                }
+
+                                if(!gotovo){
+                                    AcceptBoard();
+                                }
                             }
-
-                            SendBoard();
-                            AcceptBoard();
                         }
 
                         //citimo plocu
@@ -1031,6 +1180,8 @@
                                     }
                                 }
                             }
+
+                            castles(na_potezu);
                         }
   
                         console.log("Clicked on cell (" + row + ", " + col + ")");
@@ -1045,20 +1196,20 @@
         });
 
         $(window).on('beforeunload', function() {
-            
             $.ajax({
-                url: 'server.php', 
+                url: '../controller/gameController.php', 
                 type: 'POST',
                 data:{
                     action: 'gameover',
-                    ending: 'lose'
+                    ending: 'lose',
+                    user: username
                 },
-                dataType: 'json',
-                async: false, 
-                success: function() {},
-                error: function() {}
+                dataType: 'json', 
+                success: function() {
+                },
+                error: function() {
+                }
             });
-
             return '';
         });
   </script>

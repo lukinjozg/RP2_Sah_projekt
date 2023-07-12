@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Chessboard</title>
-    <link rel="stylesheet" type="text/css" href="ukrasi.css">
+    <link rel="stylesheet" type="text/css" href="../css/ukrasi.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
@@ -23,9 +23,11 @@
         //w,b - u indeksu koje je boje
 
         var urlParams = new URLSearchParams(window.location.search);
-        var username = urlParams.get('username');
+        var username = urlParams.get('param1');
+        var username2 = urlParams.get('param2');
 
         var gotovo = 0;
+        var promocija = 0;
 
         var kings = {
             b: [0,4],
@@ -100,7 +102,7 @@
                     if(ploca[i][j][0] != '.'){
                         var newSegment = $( napravi_hp_bar(ploca[i][j][1], hp_stats[ploca[i][j][0][0]] - ploca[i][j][1]));
                         $(id_button).empty();
-                        $('<img>').attr('src', ploca[i][j][0] + '.png').appendTo(id_button);
+                        $('<img>').attr('src', '../' + ploca[i][j][0] + '.png').appendTo(id_button);
                                 
                         $(id_button).append(newSegment);
                     }
@@ -481,7 +483,7 @@
             console.log('šaljem 2. signal');
 
             $.ajax({
-                url: 'server.php',
+                url: '../controller/gameController.php',
                 method: 'POST',
                 data:{
                     action: 'send',
@@ -500,7 +502,7 @@
 
         function AcceptBoard() {
             $.ajax({
-                url: 'server.php',
+                url: '../controller/gameController.php',
                 method: 'POST',
                 data:{
                     action: 'reach',
@@ -549,8 +551,9 @@
 
         function dodaj_username(){
             $('#pw').text(username);
+            $('#pb').text(username2);
         }
-
+        
         $(document).ready(function() {
             //Signal();
 
@@ -567,7 +570,7 @@
                     
                     if(ploca[i][j][0] != '.'){
                         var cell = $("<button>"+ napravi_hp_bar(ploca[i][j][1] , 0) + "</button>");
-                        $('<img>').attr('src', ploca[i][j][0] + '.png').appendTo(cell);
+                        $('<img>').attr('src', '../' + ploca[i][j][0] + '.png').appendTo(cell);
                     }
 
                     else{
@@ -667,7 +670,7 @@
 
                                 var newSegment = $( napravi_hp_bar(ploca[current_piece[0]][current_piece[1]][1], hp_stats[ploca[current_piece[0]][current_piece[1]][0][0]] - ploca[current_piece[0]][current_piece[1]][1]));
                                 $(id_button).empty();
-                                $('<img>').attr('src', ploca[current_piece[0]][current_piece[1]][0] + '.png').appendTo(id_button);
+                                $('<img>').attr('src', '../' + ploca[current_piece[0]][current_piece[1]][0] + '.png').appendTo(id_button);
                                 
                                 $(id_button).append(newSegment);
                             
@@ -945,9 +948,9 @@
         });
 
         $(window).on('beforeunload', function() {
-            
+             
             $.ajax({
-                url: 'server.php', 
+                url: '../controller/gameController.php', 
                 type: 'POST',
                 data:{
                     action: 'gameover',
