@@ -12,7 +12,7 @@
     <p id ='Cekaj'></p>
 
     <script>
-        var username;
+        var username = "<?php echo $currentUsername; ?>";
 
         function request(){
 
@@ -52,8 +52,6 @@
         $(document).ready(function() {
         
         $('#submitButton').click(function() {
-            var user = $('#username').val();
-            username = user;
             console.log("izvan f", username);
             request($('#username').val());
             console.log("gumb je kliknut");
