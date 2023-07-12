@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chessboard</title>
+    <link rel="stylesheet" type="text/css" href="ukrasi.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <p id ='pb' class="username-box"> Mile_piletina </p>
+    
+    <div class="chessboard"></div>
+
+    <p id = 'pw' class="username-box"> Igrac1</p>
+    <p id="luzer"></p>
+    <div id = 'promocija'></div>
+    
+    <script>
+        //K - kralj
+        //Q - kraljica
+        //B - bishop/lovac
+        //P - pijun
+        //N - Knight/ konj
+        //R - rook, kula
+        //w,b - u indeksu koje je boje
+
+        var urlParams = new URLSearchParams(window.location.search);
+        var username = urlParams.get('param1');
+        var username2 = urlParams.get('param2');
+
+        var gotovo = 0;
+        var promocija = 0;
+
+        var kings = {
+            b: [0,4],
+            w: [7,4]
+        }
+
+        var ploca = [[['Rb',5],['Nb',2],['Bb',2],['Qb',3],['Kb',4],['Bb',2],['Nb',2],['Rb',5]],
+                 [['Pb',1],['Pb',1],['Pb',1],['Pb',1],['Pb',1],['Pb',1],['Pb',1],['Pb',1]],
+                 [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
+                 [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
+                 [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
+                 [['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0],['.',0]],
+                 [['Pw',1],['Pw',1],['Pw',1],['Pw',1],['Pw',1],['Pw',1],['Pw',1],['Pw',1]],
+                 [['Rw',5],['Nw',2],['Bw',2],['Qw',3],['Kw',4],['Bw',2],['Nw',2],['Rw',5]]];
+
+        var na_potezu = 'w';
+
+        var on_passant = [-1,-1];
+
+        var attack_stats = {
+            K: 1,
+            Q: 3,
+            N: 3,
+            R: 2,
+            B: 2,
+            P: 1
+        }
+
+        var hp_stats = {
+            K: 4,
+            Q: 3,
+            N: 2,
+            R: 5,
+            B: 2,
+            P: 1
+        }
+
+        function make_circle(x,y){
+            id_button = "#" + x.toString() + y.toString();
+
+            $(id_button).removeClass();
+
+            if((x+y)%2 == 0){
+                $(id_button).addClass('white1');
+            }
+
+            else{
+                $(id_button).addClass('black1');
+            }
+        }
+
+        function line(smx,smy, x , y){
+            var from_x = x;
+            var from_y = y;
+
+            while(true){
+                x += smx;
+                y += smy;
+
+                if(!in_board(x,y)) break;
+
+                if(ploca[x][y][0] != '.'){
+                    if(ploca[x][y][0][1] == na_potezu) break;
+
+                    if(is_king_safe(na_potezu,from_x,from_y, x,y)) make_circle(x,y);
+                    break;
+                }
+
+                if(is_king_safe(na_potezu,from_x,from_y, x,y)) make_circle(x,y);
+            }
+        }
+
+        function napravi_promociju(x,y, color){
+            promocija = 1;
+            $("#promocija").text("Izaberi figuru za promociju: ");
+
+            promotion('Q', color,x,y);
+
+            promotion('N', color,x,y);
+
+            promotion('R', color,x,y);
+
+            promotion('B', color,x,y);
+        }
+
+        function promotion(figura, color,x,y){
+            var fig = '';
+            fig = figura + color;
+
+            var button = $("<button>" + fig + "</button>");
+  
+            button.click(function() {
+                ploca[x][y] = [fig, hp_stats[figura]];
+
+                promocija = 0;
+
+                cisti_plocu();
+
+                $("#promocija").empty();
+
+                if(!gotovo){
+                    SendBoard();
+
+                    setTimeout(function() {}, 100);
+                }
+                //ako je matiran
+                if(check_mate(na_potezu) == 1){
+                    console.log("Izgubio je igru", na_potezu);
+
+                    $("#luzer").text("Izgubio je igru " + na_potezu);
+
+                    matiranSend('win', na_potezu);
+
+                    gotovo = 1;
+                }
+
+                else if(check_mate(na_potezu) == 2){
+                    console.log("Izgubio je igru", na_potezu);
+
+                    $("#luzer").text("remi je");
+
+                    matiranSend('draw', na_potezu);
+
+                    gotovo = 1;
+                }
+
+                if(!gotovo){
+                    AcceptBoard();
+                }
+            });
+
+            $("#promocija").append(button);
+        }
+
+        //castles
+        kingw_moved = false;
+
+        rw1_moved = false; // levi
+        rw2_moved = false; // desni
+
+        //kralja ništa nemože ubiti iz prve pa nemoramo sve gledati
+        function castles(color){
+            var slobodno = true;
+
+            if(color == 'w'){
+                if(kingw_moved == true || ploca[7][4][1] != 4) return false;
+
+                if(!is_king_safe(color,0,0,0,0)) return false;
+
+                console.log("kralj je na mjestu siguran");
+
+                if(rw1_moved == false && ploca[7][0][1] == 5){
+                    for(var i = 0; i < 3; i ++){
+                        if(ploca[7][1 + i][0] != '.'){
+                            console.log("polje spriječava rošadu:",7, i + 1);
+                            slobodno = false;
+                            break
+                        }
+                    }
+                    
+                    if(slobodno){
+                        make_circle(7,0);
+                    }
+                }
+
+                if(rw2_moved == false && ploca[7][7][1] == 5){
+                    slobodno = true;
+
+                    console.log("kula D je zdrava");
+
+                    for(var i = 0; i < 2; i ++){
+                        if(ploca[7][6 - i][0] != '.'){
+                            console.log("polje spriječava rošadu:",7, 6 - i);
+                            slobodno = false;
+                            break
+                        }
+                    }
+
+
+                    if(slobodno){
+                        make_circle(7,7);
+                    }
+                }
+            }
+            return true;
+        }
+
+        var en_passb = [0,0,0,0,0,0,0,0];
+
+        function provjeri_passant(color){
+            for(var i = 0; i <  8; i ++){
+                
+                if(ploca[1][i][0] == '.'){
+                    if(ploca[3][i][0][0] == 'P' && ploca[3][i][0][1] == color && en_passb[i] == 0){
+                        on_passant = [3,i];
+                        en_passb[i] = 1;
+
+                        console.log("ispunio se if",on_passant[0],on_passant[1]);
+                        break;
+                    }
+                    
+                    console.log("Tocka je al nije 2");
+                    en_passb[i] = 1;
+                }
+
+                else if(ploca[1][i][0][0] != 'P' || ploca[1][i][0][1] != color ){
+                    en_passb[i] = 1;
+                    console.log("Tocka je al nije 2");
+                }
+
+                console.log("on passant B;",en_passb[i]);
+            }
+
+            console.log("on passant;",on_passant[0], on_passant[1]);
+        }
+
+        function cisti_plocu(){
+            for (var i = 0; i < 8; i++) {
+                for (var j = 0; j < 8; j++) {
+                    id_button = "#" + i.toString() + j.toString();
+
+                    if(ploca[i][j][0] != '.'){
+                        var newSegment = $( napravi_hp_bar(ploca[i][j][1], hp_stats[ploca[i][j][0][0]] - ploca[i][j][1]));
+                        $(id_button).empty();
+                        $('<img>').attr('src',  '../' + ploca[i][j][0] + '.png').appendTo(id_button);
+                                
+                        $(id_button).append(newSegment);
+                    }
+
+                    else{
+                        $(id_button).empty();
+                    }
+
+                    $(id_button).removeClass();
+
+                    if((i+j)%2 == 0){
+                        $(id_button).addClass('white');
+                    }
+
+                    else{
+                        $(id_button).addClass('black');
+                    }
+                }
+            }
+        }
+
+        function okreni_plocu(){
+            var pcopy = [];
+            for(var i = 0; i < 8; i ++){
+                pcopy[i] = [];
+                for(var j = 0; j < 8; j ++){
+                    pcopy[i][j] = [];
+                    pcopy[i][j][0] = ploca[7 - i][7 - j][0];
+                    pcopy[i][j][1] = ploca[7 - i][7 - j][1];
+                }
+            }
+
+
+            for(var i = 0; i < 8; i ++){
+                for(var j = 0; j < 8; j ++){
+                    ploca[i][j][0] = pcopy[i][j][0];
+                    ploca[i][j][1] = pcopy[i][j][1];
+                }
+            }
+        }
+        
+        function in_board(x, y){
+            if( x >= 0 && x < 8 && y >= 0 && y < 8){
+                return true;
+            }
+
+            return false;
+        }
+
+        function promjeni_tko_je_na_potezu(){
+            if( na_potezu == 'w'){
+                na_potezu = 'b';
+                console.log("Na potezu je B");
+                return;
+            }
+
+            console.log("Na potezu je W");
+            na_potezu = 'w';
+        }
+
+        function napravi_hp_bar(ostalo_hp, izgubljeno_hp){
+            var str_hp = '<div class="health-bar">';
+
+            for(var i = 0; i < ostalo_hp; i ++){
+                str_hp += '<div class="bar-segment1"></div>';
+            }
+
+            for(var i = 0; i < izgubljeno_hp; i ++){
+                str_hp += '<div class="bar-segment2"></div>';
+            }
+
+            str_hp += '</div>';
+
+            return str_hp;
+        }
+
+        function test_line(smx,smy, str /* B ili R */, color){
+            var x = kings[color][0];
+            var y = kings[color][1];
+
+            while(true){
+                x += smx;
+                y += smy;
+
+                if(!in_board(x,y)) break;
+
+                if(ploca[x][y][0][0] == str || ploca[x][y][0][0] == 'Q'){
+                        if(ploca[x][y][0][1] != color && ploca[kings[color][0]][kings[color][1]][1] <= attack_stats[ploca[x][y][0][0]]){
+                            console.log("Kralj je napadnut od figure",x,y ,ploca[x][y][0][0]);
+                            return false;
+                        }
+
+                    break;
+                }
+
+                if(ploca[x][y][0] != '.') break;
+            }
+
+            return true;
+        }
+
+        function is_king_safe(color, from_x, from_y, where_x, where_y){
+            //jel ga napadaju kula,kraljica ili lovac
+            var x = kings[color][0];
+            var y = kings[color][1];
+
+            var from = ploca[from_x][from_y];
+            var where = ploca[where_x][where_y];
+
+            //jel figura skace ili ne gledamo
+            if(!(ploca[where_x][where_y][0] == ploca[from_x][from_y][0] /*ako su iste samo skip*/ ) && ploca[where_x][where_y][1] <= attack_stats[ploca[from_x][from_y][0][0]]){
+                ploca[where_x][where_y] = ploca[from_x][from_y];
+                ploca[from_x][from_y] = ['.',0];
+            }
+
+            if(!(test_line(1,0,'R',color) && test_line(-1,0,'R', color) && test_line(0,1,'R', color) && test_line(0,-1,'R',color) && 
+                 test_line(1,1,'B',color) && test_line(1,-1,'B',color) && test_line(-1,1,'B',color) && test_line(-1,-1,'B',color))){
+                    ploca[where_x][where_y] = where;
+                    ploca[from_x][from_y] = from;
+                    return false;
+            }
+
+            //konj
+            var movesx = [2, 1, 2, 1,-2,-1,-2,-1];
+            var movesy = [1, 2,-1,-2, 1, 2,-1,-2];
+
+            for(var i = 0; i < 8; i ++){
+                x = kings[color][0] + movesx[i], y = kings[color][1] + movesy[i];
+
+                if(!in_board(x,y)) continue;
+
+                if(ploca[x][y][0][0] == 'N'){
+                    if(ploca[x][y][0][1] != color && ploca[kings[color][0]][kings[color][1]][1] <= attack_stats[ploca[x][y][0][0]]){
+                        ploca[where_x][where_y] = where;
+                        ploca[from_x][from_y] = from;
+                        
+                        console.log("Kralj je napadnut od figure",x,y, ploca[x][y][0][0]);
+                        return false;
+                    }
+                }
+            }
+
+            //kralj
+            for(var i = -1; i < 2; i ++){
+                for(var j = -1; j < 2; j ++){
+                    if( i == 0 && j == 0) continue;
+
+                    if(!in_board(i,j)) continue;
+
+                    if(ploca[i][j][0][0] == 'K' && ploca[i][j][0][1] != color && ploca[kings[color][0]][kings[color][1]][1] <= 1){//kralj ad = 1
+                        ploca[where_x][where_y] = where;
+                        ploca[from_x][from_y] = from;
+
+                        console.log("Kralj je napadnut od figure",x,y, ploca[x][y][0][0]);
+                        return false;
+                    } 
+                }
+            }
+
+            //pijun
+            var sm = -1;
+            if(color == 'b') sm = 1;
+
+            if(((in_board(kings[color][0] + sm,kings[color][1] + 1) && ploca[kings[color][0] + sm][kings[color][1] + 1][0][0] == 'P' && ploca[kings[color][0] + sm][kings[color][1] + 1][0][1] != color)
+                || (in_board(kings[color][0] + sm,kings[color][1] - 1) && ploca[kings[color][0] + sm][kings[color][1] - 1][0][0] == 'P' && ploca[kings[color][0] + sm][kings[color][1] - 1][0][1] != color))
+                && ploca[kings[color][0]][kings[color][1]][1] <= 1){
+                    ploca[where_x][where_y] = where;
+                    ploca[from_x][from_y] = from;
+                    
+                    console.log("Kralj je napadnut od Pijuna",kings[color][0],kings[color][1]);
+                    return false;
+                }
+            
+            //sve je dobro
+            ploca[where_x][where_y] = where;
+            ploca[from_x][from_y] = from;
+
+            return true;
+        }
+
+        function check_mate(color){
+            getKings();
+            var kralj_nije_napadnut = false;
+            function simline(smx,smy, x , y){
+                var from_x = x;
+                var from_y = y;
+
+                while(true){
+                    x += smx;
+                    y += smy;
+
+                    if(!in_board(x,y)) break;
+
+                    if(ploca[x][y][0] != '.'){
+                        if(ploca[x][y][0][1] == color) break;
+
+                        if(is_king_safe(color,from_x,from_y, x,y)) return true;
+                        
+                        break;
+                    }
+
+                    if(is_king_safe(color,from_x,from_y, x,y)) return true;
+                }
+
+                return false;
+            }
+
+            function simR(x,y){
+                return simline(1,0, x , y) || simline(0,1, x , y) || simline(-1,0, x , y) || simline(0,-1, x , y);
+            }
+
+            function simB(x,y){
+                return simline(1,1, x , y) || simline(1,-1, x , y) || simline(-1,1, x , y) || simline(-1,-1, x , y);
+            }
+
+            function simQ(x,y){
+                return simline(1,1, x , y) || simline(1,-1, x , y) || simline(-1,1, x , y) || simline(-1,-1, x , y) ||
+                simline(1,0, x , y) || simline(0,1, x , y) || simline(-1,0, x , y) || simline(0,-1, x , y);
+            }
+
+            function simN(xrow,ycol){
+                var movesx = [2, 1, 2, 1,-2,-1,-2,-1];
+                var movesy = [1, 2,-1,-2, 1, 2,-1,-2];
+                var x,y;
+
+                for(var i = 0; i < 8; i ++){
+                    x = xrow + movesx[i], y = ycol + movesy[i];
+
+                    if(!in_board(x,y) || !is_king_safe(color,xrow,ycol,x,y)) continue;
+
+                    if(ploca[x][y][0] == '.') return true;
+
+                    else if(ploca[x][y][0] != '.' && ploca[x][y][0][1] != color) return true;
+                }
+
+                return false;
+            }
+
+            function simP(xrow, ycol){
+                var pocetak = 1;
+                var sm = 1;
+
+                var x ,y;
+
+                if(color == 'w'){
+                    pocetak = 6;
+                    sm = -1;
+                }
+
+                //na pocetku moze 2 unaprijed
+                if(xrow == pocetak && ploca[xrow + sm][ycol][0] == '.'){
+                    x = xrow + sm;
+                    y = ycol;
+
+                    if(is_king_safe(color,xrow,ycol,x,y)) return true;
+
+                    if(ploca[xrow + sm + sm][ycol][0] == '.'){
+                        x += sm;
+
+                        if(is_king_safe(color,xrow,ycol,x,y)) return true;
+                    }
+                }
+
+                //inace 1 unaprijed
+                else if( in_board(xrow + sm, ycol) && ploca[xrow + sm][ycol][0] == '.'){
+                    x = xrow + sm;
+                    y = ycol;
+
+                    if(is_king_safe(color,xrow,ycol,x,y)) return true;
+                }
+
+                            //ako ima neš za napasti
+                if(in_board(xrow + sm, ycol - 1) && ploca[xrow + sm][ycol - 1][0] != '.' && ploca[xrow + sm][ycol - 1][0][1] != color){
+                    x = xrow + sm;
+                    y = ycol - 1;
+
+                    if(is_king_safe(color,xrow,ycol,x,y)) return true;
+                }
+
+                if(in_board(xrow + sm, ycol + 1) && ploca[xrow + sm][ycol + 1][0] != '.' && ploca[xrow + sm][ycol + 1][0][1] != color){
+                    x = xrow + sm;
+                    y = ycol + 1;
+
+                    if(is_king_safe(color,xrow,ycol,x,y)) return true;
+                }
+
+                if(on_passant[0] != -1){
+                    x = xrow;
+                    y = ycol;
+
+                    if( x == on_passant[0] && (y - 1 == on_passant[1] || y + 1 == on_passant[1])){
+                        if(is_king_safe(color,xrow,ycol,x + sm,on_passant[1])) return true;
+                    }
+                }
+
+                return false;
+            }
+
+            var x = kings[color][0];
+            var y = kings[color][1];
+
+            for(var i = -1; i < 2; i ++){
+                for(var j = -1; j < 2; j ++){
+                    if(i == 0 && j == 0){
+                        if(is_king_safe(color,x,y,x,y)){
+                            console.log("Kralj se može pomaknuti na", x , y);
+                            kralj_nije_napadnut = true;
+                        }
+                    }
+                    kings[color][0] = x + i;
+                    kings[color][1] = y + j;
+
+                    if(in_board(kings[color][0],kings[color][1]) && ploca[kings[color][0]][kings[color][1]][0] == '.' && is_king_safe(color,x,y,kings[color][0],kings[color][1])){
+                        console.log("Kralj se može pomaknuti na", x + i , y + j);
+                        kings[color][0] = x;
+                        kings[color][1] = y;
+                        return false;
+                    } 
+
+                    kings[color][0] = x;
+                    kings[color][1] = y;
+                }
+            }i
+
+            for(var i = 0; i < 8; i ++){
+                for(var j = 0; j < 8; j ++){
+                    if(ploca[i][j][0] != '.' && ploca[i][j][0][1] == color){
+                        if(ploca[i][j][0][0] == 'R' && simR(i,j)){
+                            console.log(i,j);
+                            return false;
+                        }
+                        else if(ploca[i][j][0][0] == 'B' && simB(i,j)){
+                            console.log(i,j);
+                            return false;
+                        } 
+                        else if(ploca[i][j][0][0] == 'Q' && simQ(i,j)){
+                            console.log(i,j);
+                            return false;
+                        }
+
+                        else if(ploca[i][j][0][0] == 'N' && simN(i,j)){
+                            console.log(i,j);
+                            return false;
+                        } 
+                        else if(ploca[i][j][0][0] == 'P' && simP(i,j)){
+                            console.log(i,j);
+                            return false;
+                        } 
+
+                    }
+                }
+            }
+
+            if(kralj_nije_napadnut == true) return 2;//draw
+
+            return 1;//mat kralj je napadnut i nemozemo nikako to sprijeciti
+        }
+
+        function Signal() {
+            console.log('šaljem 1. signal');
+            $.ajax({
+                url: 'server1.php',
+                method: 'GET',
+                data:{
+                   player2: 'igrac' 
+                },
+                dataType: 'json',
+                success: function() {
+                    console.log("Došo je signal");
+                },
+                error: function() {
+                    console.error('Error');
+                    // Retry the request in case of errors
+                }
+            });
+        }
+
+        function SendBoard() {
+            console.log('šaljem 2. signal');
+
+            $.ajax({
+                url: 'server.php',
+                method: 'POST',
+                data:{
+                    action: 'send',
+                    board: ploca,
+                    user: username
+                },
+                dataType: 'json',
+                success: function() {
+                    if(data.success == false){
+                        gotovo = 1; //drugi igrač je završio igru
+                        $('#luzer').text('Drugi igrač je već izašao iz igre');
+                    }
+                },
+                error: function() {
+                    console.error('Error');
+                    // Retry the request in case of errors
+                }
+            });
+        }
+
+        function getKings(){
+            for(var i = 0; i < 8; i ++){
+                for(var j = 0; j < 8; j ++){
+                    if(ploca[i][j][0][0] == 'K'){
+                        kings[ploca[i][j][0][1]][0] = i;
+                        kings[ploca[i][j][0][1]][1] = j; 
+                    }
+                }
+            }
+        }
+
+        function AcceptBoard() {
+            $.ajax({
+                url: 'server.php',
+                method: 'POST',
+                data:{
+                    action: 'reach',
+                    user: username 
+                },
+                dataType: 'json',
+                success: function(data) {
+                    console.log("NESTO SE TU ISPUNILO");
+                    if(data.success == false){
+                        console.log(data.error);
+                        if(data.error[0] == 'D'){
+                            gotovo = 1; //drugi igrač je završio igru
+                            $('#luzer').text('Drugi igrač je već izašao iz igre');
+                        }
+
+                        else{
+                            AcceptBoard();
+                            console.log('bijeli trazi potez');
+                        }
+                    }
+
+                    else{
+                        ploca = data.board;
+                        for(var i = 0; i  < 7; i ++){
+                            for(var j = 0; j < 7; j ++){
+                                if(data.board[i][j][0][0] == 'K'){
+                                    kings[data.board[i][j][0][1]][0] =  i;
+                                    kings[data.board[i][j][0][1]][1] =  j;
+                                //jer je okrecemo
+                                }
+
+                            //možda za en passant
+                            }
+                        }
+
+                        if(check_mate('w') == 1){
+                            console.log("Izgubio je igru", 'w');
+
+                            $("#luzer").text("Izgubio je igru " + 'w');
+
+                            matiranSend('lose', na_potezu);
+                            //šalji to negdje
+                            gotovo = 1;
+                        }
+
+                        else if(check_mate('w') == 2){
+                            console.log("Igra je remi");
+
+                            $("#luzer").text("remi je");
+
+                            matiranSend('draw', na_potezu);
+                            //šalji to negdje
+                            gotovo = 1;
+                        }
+
+                        console.log("ploca je acceptana");
+
+                            for(var i = 0; i < 8; i ++){
+                                console.log(ploca[i][0][0],ploca[i][1][0],ploca[i][2][0],ploca[i][3][0],ploca[i][4][0],ploca[i][5][0],ploca[i][6][0],ploca[i][7][0]);
+                            }
+
+                            for(var i = 0; i < 8; i ++){
+                                console.log(ploca[i][0][1],ploca[i][1][1],ploca[i][2][1],ploca[i][3][1],ploca[i][4][1],ploca[i][5][1],ploca[i][6][1],ploca[i][7][1]);
+                            }
+
+                        promjeni_tko_je_na_potezu();
+                        cisti_plocu();
+                    }
+                },
+                error: function() {
+                    setTimeout(AcceptBoard, 2000);
+                }
+            });
+        }
+
+        function dodaj_username(){
+            $('#pw').text(username);
+            $('#pb').text(username2);
+        }
+
+        $(document).ready(function() {
+            //Signal();
+
+            dodaj_username();
+
+            var boardSize = 8;
+            var isWhite = true;
+
+            var current_piece = [-1,-1];
+  
+            for (var i = 0; i < boardSize; i++) {
+                for (var j = 0; j < boardSize; j++) {
+                    var cellClass = isWhite ? "white" : "black";
+                    
+                    if(ploca[i][j][0] != '.'){
+                        var cell = $("<button>"+ napravi_hp_bar(ploca[i][j][1] , 0) + "</button>");
+                        $('<img>').attr('src', '../' + ploca[i][j][0] + '.png').appendTo(cell);
+                    }
+
+                    else{
+                        var cell = $("<button></button>");
+                    }
+
+                    cell.addClass(cellClass);
+                
+                    cell.attr("data-row", i);
+                    cell.attr("data-col", j);
+                    cell.attr("data-clicked", 0);
+                
+                    cell.attr('id', i.toString() + j.toString());
+  
+                    cell.click(function() {
+                        console.log("Kralj bijeli je na", kings['w'][0],  kings['w'][1]);
+                        console.log("Kralj crni  je na", kings['b'][0],  kings['b'][1]);
+                        
+                        for(var i = 0; i < 8; i ++){
+                            console.log(ploca[i][0][0],ploca[i][1][0],ploca[i][2][0],ploca[i][3][0],ploca[i][4][0],ploca[i][5][0],ploca[i][6][0],ploca[i][7][0]);
+                        }
+
+                        for(var i = 0; i < 8; i ++){
+                            console.log(ploca[i][0][1],ploca[i][1][1],ploca[i][2][1],ploca[i][3][1],ploca[i][4][1],ploca[i][5][1],ploca[i][6][1],ploca[i][7][1]);
+                        }
+
+                        var row = $(this).data("row");
+                        var col = $(this).data("col");
+                        var id_button;
+
+                        id_button = "#" + row.toString() + col.toString();
+
+                        var kliknuo = 0;
+                        if($(id_button).attr('class').length > 5){
+                            kliknuo = 1;
+                            id_button = "#" + row.toString() + col.toString();
+                            //za on passant provjera
+                            if(on_passant[0] != -1){
+                                //dogodio se on passant
+                                var pomocna_koordinata = -1;
+
+                                if(ploca[current_piece[0]][current_piece[1]][0][0] == 'P' &&  row == (on_passant[0] + pomocna_koordinata) && col == on_passant[1] ){
+                                    id_button = "#" + on_passant[0].toString()  + on_passant[1].toString();
+                                    ploca[on_passant[0]][on_passant[1]] = ['.',0];
+                                    $(id_button).empty();
+                                }
+                                on_passant = [-1,-1];
+                            }
+
+                            if(ploca[current_piece[0]][current_piece[1]][0][0] == 'P'){
+                                if(na_potezu == 'w' && row == 0){
+                                    napravi_promociju(row,col, na_potezu);
+                                }
+                            }
+                            
+                            if(ploca[current_piece[0]][current_piece[1]][0][0] == 'K'){
+                                kingw_moved = true;
+                            }
+
+                            if(ploca[current_piece[0]][current_piece[1]][0][0] == 'R'){
+                                if(ploca[current_piece[0]][current_piece[1]][0][1] == 'w'){
+                                    if(current_piece[1] == 0) rw1_moved = true;
+                                    else rw2_moved = true;
+                                }
+                            }
+
+                            if(ploca[row][col][0] == 'Rw' && na_potezu == 'w'){
+                                ploca[row][col] = ['.',0];
+                                ploca[7][4] = ['.',0];
+                                if(col == 0){
+                                    ploca[row][2] = ['Kw',4];
+                                    ploca[row][3] = ['Rw',5];
+                                    kings[na_potezu][1] = 2;
+                                    rw1_moved = true;
+                                    kingw_moved = true;
+                                }
+
+                                else{
+                                    ploca[row][6] = ['Kw',4];
+                                    ploca[row][5] = ['Rw',5];
+
+                                    kings[na_potezu][1] = 5;
+                                    rw2_moved = true;
+                                    kingw_moved = true;
+                                }
+                            }
+
+                            
+                            
+                            else if(ploca[row][col][0] == '.' || ploca[row][col][1] <= attack_stats[ploca[current_piece[0]][current_piece[1]][0][0]]){
+                                if(ploca[current_piece[0]][current_piece[1]][0][0] == 'K'){
+                                    kings[na_potezu][0] = row;
+                                    kings[na_potezu][1] = col;
+
+                                    console.log("Kralj je na koordinatama",row,col,"sada");
+                                }
+
+                                ploca[row][col] = ploca[current_piece[0]][current_piece[1]];
+
+                                var newSegment = $( napravi_hp_bar(ploca[current_piece[0]][current_piece[1]][1], hp_stats[ploca[current_piece[0]][current_piece[1]][0][0]] - ploca[current_piece[0]][current_piece[1]][1]));
+                                $(id_button).empty();
+                                $('<img>').attr('src',  '../' +  ploca[current_piece[0]][current_piece[1]][0] + '.png').appendTo(id_button);
+                                
+                                $(id_button).append(newSegment);
+                            
+                                ploca[current_piece[0]][current_piece[1]] = ['.',0];
+                            
+                                id_button = "#" + current_piece[0].toString()  + current_piece[1].toString();
+                                $(id_button).empty();
+
+                                current_piece[0] = row;
+                                current_piece[1] = col;
+                            }
+
+                            else{
+                                ploca[row][col][1] -= attack_stats[ploca[current_piece[0]][current_piece[1]][0][0]];
+                                
+                                console.log("hp je sada", ploca[row][col][1]);
+                                
+                                var newSegment = $( napravi_hp_bar(ploca[row][col][1], hp_stats[ploca[row][col][0][0]] - ploca[row][col][1]));
+                                $(id_button).append(newSegment);
+                            }
+                                
+                            promjeni_tko_je_na_potezu();
+
+                            if(promocija != 1){
+                                console.log("cekam promociju");
+
+                                if(!gotovo){
+                                    SendBoard();
+
+                                    setTimeout(function() {}, 100);
+                                }
+                                //ako je matiran
+                                if(check_mate(na_potezu) == 1){
+                                    console.log("Izgubio je igru", na_potezu);
+
+                                    $("#luzer").text("Izgubio je igru " + na_potezu);
+
+                                    matiranSend('win', na_potezu);
+
+                                    gotovo = 1;
+                                }
+
+                                else if(check_mate(na_potezu) == 2){
+                                    console.log("Izgubio je igru", na_potezu);
+
+                                    $("#luzer").text("remi je");
+
+                                    matiranSend('draw', na_potezu);
+
+                                    gotovo = 1;
+                                }
+
+                                if(!gotovo){
+                                    AcceptBoard();
+                                }
+                            }
+                        }
+
+                        //cistimo plocu
+                        cisti_plocu();
+
+                        if(na_potezu == 'b' || gotovo || kliknuo || ploca[row][col][0] == '.' || ploca[row][col][0][1] != na_potezu){
+                            console.log("Tocka");
+
+                            current_piece[0] = -1;
+                            current_piece[1] = -1;
+                        }
+
+                        else if(current_piece[0] == row && current_piece[1] == col){
+                            current_piece[0] = -1;
+                            current_piece[1] = -1;
+                        }
+
+                        //Pijun
+                        else if(ploca[row][col][0][0] == 'P'){
+                            console.log("Pawn");
+
+                            provjeri_passant('b');
+
+                            current_piece[0] = row;
+                            current_piece[1] = col;
+
+                            var x , y;
+                            var pocetak = 1;
+                            var sm = 1;
+
+                            if(na_potezu == 'w'){
+                                pocetak = 6;
+                                sm = -1;
+                            }
+
+                            //na pocetku moze 2 unaprijed
+                            if(row == pocetak && ploca[row + sm][col][0] == '.'){
+                                x = row + sm;
+                                y = col;
+
+                                if(is_king_safe(na_potezu,row,col,x,y)) make_circle(x,y);
+
+                                if(ploca[row + sm + sm][col][0] == '.'){
+                                    x += sm;
+
+                                    if(is_king_safe(na_potezu,row,col,x,y)) make_circle(x,y);
+                                }
+                            }
+
+                            //inace 1 unaprijed
+                            else if( in_board(row + sm, col) && ploca[row + sm][col][0] == '.'){
+                                x = row + sm;
+                                y = col;
+
+                                if(is_king_safe(na_potezu,row,col,x,y)) make_circle(x,y);
+                            }
+
+                            //ako ima neš za napasti
+                            if(in_board(row + sm, col - 1) && ploca[row + sm][col - 1][0] != '.' && ploca[row + sm][col - 1][0][1] != na_potezu){
+                                x = row + sm;
+                                y = col - 1;
+
+                                if(is_king_safe(na_potezu,row,col,x,y)) make_circle(x,y);
+                            }
+
+                            if(in_board(row + sm, col + 1) && ploca[row + sm][col + 1][0] != '.' && ploca[row + sm][col + 1][0][1] != na_potezu){
+                                x = row + sm;
+                                y = col + 1;
+
+                                if(is_king_safe(na_potezu,row,col,x,y)) make_circle(x,y);
+                            }
+
+                            if(on_passant[0] != -1){
+                                x = row;
+                                y = col;
+
+                                if( x == on_passant[0] && (y - 1 == on_passant[1] || y + 1 == on_passant[1])){
+                                    if(is_king_safe(na_potezu,row,col,x + sm,on_passant[1])) make_circle(x + sm,on_passant[1]);
+                                }
+                            }
+                        }
+
+                        //Kula
+                        else if(ploca[row][col][0][0] == 'R'){
+                            console.log("Rook");
+
+                            current_piece[0] = row;
+                            current_piece[1] = col;
+
+                            var x = row, y = col; 
+
+                            //gore
+                            line(1,0,x,y);
+    
+                            //dole
+                            line(-1,0,x,y);
+
+                            //desno
+                            line(0,1,x,y);
+    
+                            //levo
+                            line(0,-1,x,y);
+                        }
+
+                        //Lovac
+                        else if(ploca[row][col][0][0] == 'B'){
+                            console.log("Bishop");
+
+                            current_piece[0] = row;
+                            current_piece[1] = col;
+
+                            var x = row, y = col; 
+
+                            //gore desno
+                            line(1,1,x,y);
+    
+                            //dole desno
+                            line(-1,1,x,y);
+
+                            //gore levo 
+                            line(1,-1,x,y);
+    
+                            //dole levo
+                            line(-1,-1,x,y);
+                        }
+
+                        //Kraljica
+                        else if(ploca[row][col][0][0] == 'Q'){
+                            console.log("Queen");
+
+                            current_piece[0] = row;
+                            current_piece[1] = col;
+
+                            var x = row, y = col; 
+
+                            //gore desno
+                            line(1,1,x,y);
+    
+                            //dole desno
+                            line(-1,1,x,y);
+
+                            //gore levo 
+                            line(1,-1,x,y);
+    
+                            //dole levo
+                            line(-1,-1,x,y);
+
+                            //gore
+                            line(1,0,x,y);
+    
+                            //dole
+                            line(-1,0,x,y);
+
+                            //desno
+                            line(0,1,x,y);
+    
+                            //levo
+                            line(0,-1,x,y);
+                        }
+
+                        //Konj
+                        else if(ploca[row][col][0][0] == 'N'){
+                            console.log("Knight");
+
+                            current_piece[0] = row;
+                            current_piece[1] = col;
+
+                            var x = row, y = col; 
+
+                            var movesx = [2, 1, 2, 1,-2,-1,-2,-1];
+                            var movesy = [1, 2,-1,-2, 1, 2,-1,-2];
+
+                            for(var i = 0; i < 8; i ++){
+                                x = row + movesx[i], y = col + movesy[i];
+
+                                if(!in_board(x,y) || !is_king_safe(na_potezu,row,col,x,y)) continue;
+
+                                if(ploca[x][y][0] == '.') make_circle(x,y);
+
+                                else if(ploca[x][y][0] != '.' && ploca[x][y][0][1] != na_potezu) make_circle(x,y);
+                            }
+                        }
+
+                        //Ti
+                        else if(ploca[row][col][0][0] == 'K'){
+                            console.log("King");
+
+                            current_piece[0] = row;
+                            current_piece[1] = col;
+
+                            var x = row, y = col; 
+
+                            var movesx = [1,-1, 0, 0, 1,-1, 1,-1];
+                            var movesy = [0, 0,-1, 1, 1, 1,-1,-1];
+
+                            for(var i = 0; i < 8; i ++){
+                                x = row + movesx[i], y = col + movesy[i];
+
+                                if(!in_board(x,y)) continue;
+
+                                if(ploca[x][y][0] == '.'){
+                                    kings[na_potezu][0] = x;
+                                    kings[na_potezu][1] = y;
+
+                                    if(is_king_safe(na_potezu,row,col,x,y)) make_circle(x,y);
+                                    else console.log("kralj nije siguran na",kings[na_potezu][0],kings[na_potezu][1],"xy su1",x,y);
+
+                                    kings[na_potezu][0] = row;
+                                    kings[na_potezu][1] = col;
+                                } 
+
+                                else if(ploca[x][y][0] != '.' && ploca[x][y][0][1] != na_potezu){
+                                    if(ploca[x][y][1] <= 1){
+                                        kings[na_potezu][0] = x;
+                                        kings[na_potezu][1] = y;
+
+                                        if(is_king_safe(na_potezu,row,col,x,y)) make_circle(x,y);
+                                        else console.log("kralj nije siguran na",kings[na_potezu][0],kings[na_potezu][1],"xy su2",x,y);
+
+                                        kings[na_potezu][0] = row;
+                                        kings[na_potezu][1] = col;
+                                    }
+                                    
+                                    else{
+                                        if(is_king_safe(na_potezu,row,col,row,col)) make_circle(x,y);
+                                        else console.log("kralj nije siguran na",kings[na_potezu][0],kings[na_potezu][1],"xy su3",x,y);
+                                    }
+                                }
+                            }
+
+                            castles(na_potezu);
+                        }
+  
+                        console.log("Clicked on cell (" + row + ", " + col + ")");
+                    });
+  
+                    $(".chessboard").append(cell);
+                    isWhite = !isWhite;
+                }
+  
+                isWhite = !isWhite;
+            }
+        });
+
+        $(window).on('beforeunload', function() {
+            $.ajax({
+                url: 'server.php', 
+                type: 'POST',
+                data:{
+                    action: 'gameover',
+                    ending: 'lose',
+                    user: username
+                },
+                dataType: 'json', 
+                success: function() {
+                },
+                error: function() {
+                }
+            });
+            return '';
+        });
+  </script>
+</body>
+</html>
