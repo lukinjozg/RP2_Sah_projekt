@@ -1,0 +1,133 @@
+.chessboard {
+    display: flex;
+    flex-wrap: wrap;
+    width: 560px;
+}
+
+.chessboard button {
+    width: 70px;
+    height: 70px;
+    position: relative;
+    border: none;
+    text-align: center;
+    font-size: 20px;
+    cursor: pointer;
+    border: none;
+    outline: none;
+}
+/*dsafadsfasdfasdfasdfasdf*/
+#promocija button {
+    background-color: #4ca5af; /* Green */
+    border: none;
+    color: white;
+    margin: 5px;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+.pop {
+    width: 40px;
+}
+.chessboard img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-height: 90%;
+    width: auto;
+    height: auto;
+  }
+
+.white {
+    background-color: #ade1f5;
+}
+
+.white1 {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    border: none;
+    background-color: #ade1f5;
+    font-size: 16px;
+    cursor: pointer;
+    overflow: hidden;
+}
+  
+.white1::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 80%;
+    border: 5px solid #ff9800;
+    border-radius: 50%;
+}
+
+.black {
+    background-color: #18706c;
+}
+
+.black1 {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    border: none;
+    background-color: #18706c;
+    font-size: 16px;
+    cursor: pointer;
+    overflow: hidden;
+}
+  
+.black1::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 80%;
+    border: 5px solid #ff9800;
+    border-radius: 50%;
+}
+
+.username-box {
+    width: 200px;
+    height: 20px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    padding: 5px;
+    font-family: "Arial", sans-serif;
+}
+
+.health-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 10px;
+    height: 80%;
+    margin-top: 5px;
+    margin-left: 3px;
+    background-color: #ccc;
+    display: flex;
+    flex-direction: column-reverse;
+}
+  
+.health-bar .bar-segment1 {
+    flex: 1;
+    background-color: #4caf50;
+    margin: 1px;
+}
+
+.health-bar .bar-segment2 {
+    flex: 1;
+    background-color: #ccc;
+    margin: 1px;
+}
+
+/* Do tuda su ukrasi za board.html
