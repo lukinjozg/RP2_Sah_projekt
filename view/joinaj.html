@@ -18,7 +18,7 @@
             console.log(username);
 
             $.ajax({
-            url: '/../controller/gameController.php', 
+            url: '../projekt/controller/gameController.php', 
             type: 'POST',
             data: { 
                 action: 'join',//kjhskdjhgkjsdahfkjsdahfkjsdakf
@@ -27,18 +27,19 @@
                 success: function(response) {
                     if (response.success == true && response.turn == 'black') {
                         console.log(username," je crni");
-                        var url = 'board_black.html?param1=' + encodeURIComponent(username) + '&param2=' + encodeURIComponent(response.opponent);
+                        //var url = 'board_black.html?param1=' + encodeURIComponent(username) + '&param2=' + encodeURIComponent(response.opponent);
                         window.location.href = url;
-                        //window.location.href = 'board_black.html?username=' + encodeURIComponent(username);
+                        window.location.href = 'board_black.html?username=' + encodeURIComponent(username);
                     } else if(response.success == true && response.turn == 'white') {
                         console.log(username," je bijeli", response.success, response.turn);
-                        var url = 'board_white.html?param1=' + encodeURIComponent(username) + '&param2=' + encodeURIComponent(response.opponent);
+                        //var url = 'board_white.html?param1=' + encodeURIComponent(username) + '&param2=' + encodeURIComponent(response.opponent);
                         window.location.href = url;
-                        //window.location.href = 'board_white.html?username=' + encodeURIComponent(username); 
+                        window.location.href = 'board_white.html?username=' + encodeURIComponent(username); 
                     }
                     else{
                         console.log("Neš je po zlu pošlo", response.error);
                         console.log("odi u tri plišana medvjedića, joj uzas");
+                        console.log(username);
                         $('#Cekaj').text("Ceka protivnika...");
                         request();
                     }
