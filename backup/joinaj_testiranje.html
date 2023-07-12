@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chessboard</title>
+    <link rel="stylesheet" type="text/css" href="ukrasi.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+    <input type="text" id="username" placeholder="Enter username">
+    <button id="submitButton">Join</button>
+    <p id ='Cekaj'></p>
+
+    <script>
+        var username;
+
+        function request(){
+
+            console.log(username);
+
+            $.ajax({
+            url: 'server.php', 
+            type: 'POST',
+            data: { 
+                action: 'join',//kjhskdjhgkjsdahfkjsdahfkjsdakf
+                user: username
+                },
+                success: function(response) {
+                    if (response.success == true && response.turn == 'black') {
+                        console.log(username," je crni");
+                        var url = 'board_black.html?param1=' + encodeURIComponent(username) + '&param2=' + encodeURIComponent(response.opponent);
+                        window.location.href = url;
+                        //window.location.href = 'board_black.html?username=' + encodeURIComponent(username);
+                    } else if(response.success == true && response.turn == 'white') {
+                        console.log(username," je bijeli", response.success, response.turn);
+                        var url = 'board_white.html?param1=' + encodeURIComponent(username) + '&param2=' + encodeURIComponent(response.opponent);
+                        window.location.href = url;
+                        //window.location.href = 'board_white.html?username=' + encodeURIComponent(username); 
+                    }
+                    else{
+                        console.log("Neš je po zlu pošlo", response.error);
+                        console.log("odi u tri plišana medvjedića, joj uzas");
+                        $('#Cekaj').text("Ceka protivnika...");
+                        request();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.log("An error occurred: " + error);
+                }
+            });s
+        }
+        $(document).ready(function() {
+        
+        $('#submitButton').click(function() {
+            var user = $('#username').val();
+            username = user;
+            console.log("izvan f", username);
+            request();
+            console.log("gumb je kliknut");
+
+            console.log("poslan je ajax navodono");
+    });
+});
+    </script>
+</body>
+</html>
